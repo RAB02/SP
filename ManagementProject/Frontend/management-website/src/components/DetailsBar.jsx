@@ -17,11 +17,11 @@ export default function DetailsBar() {
       <div className="mt-6 space-y-3">
         <Link href="tel:+233543201893" className="flex items-center space-x-2 text-white">
           <Phone size={15} color="rgb(253, 252, 255)" />
-          <span></span>
+          <span>+1 (956) 123-4567</span>
         </Link>
-        <Link href="mailto:aljay3334@gmail.com" className="flex items-center space-x-2 text-white">
+        <Link href="mailto:proj066@outlook.com" className="flex items-center space-x-2 text-white">
           <Mail size={15} color="rgb(253, 252, 252)" />
-          <span></span>
+          <span>proj066@outlook.com</span>
         </Link>
       </div>
       
@@ -31,8 +31,8 @@ export default function DetailsBar() {
       </div>
       
       <div className="absolute bottom-8 flex space-x-4">
-        <Link href="" className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-pink-500">
-          <Linkedin color="#fff" size={20} />
+        <Link href="https://www.linkedin.com" className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-pink-500">
+          <Linkedin color="#fff" size={20} /> 
         </Link>
       </div>
     </div>
