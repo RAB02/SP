@@ -15,7 +15,7 @@ export default function InputSide() {
     e.preventDefault();
     setButtonLoading(true);
 
-    const response = await fetch('https://formspree.io/f/mgvawkzo', {
+    const response = await fetch('https://formspree.io/f/movnoylw', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
