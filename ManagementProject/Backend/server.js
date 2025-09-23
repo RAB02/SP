@@ -39,4 +39,35 @@ app.get('/rentals', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch data' });
     }
 });
+
+app.get('/signin', (req, res) => {
+
+
+  res.send("Please use POST to sign in");
+});
+
+app.post('/signin', async (req, res) => {
+	const { username, email, password } = req.body;
+
+  	if (!username || !email || !password) {
+    	return res.status(400).send("Missing required fields");
+  	}
+
+  	try {
+    	await db.run(
+    	  "INSERT INTO SignUp (Username, Email, Password) VALUES (?, ?, ?)",
+    	  [username, email, password]
+    	);
+
+    	res.send("Account created successfully!");
+  	} catch (err) {
+    	console.error(err);
+    	res.status(500).send("⚠️ Error creating account. Username/email may already exist.");
+  	}
+});
+
+app.get('/login', async (req, res) => {
+	
+});
+
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
