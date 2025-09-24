@@ -39,7 +39,6 @@ app.get('/rentals', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch data' });
     }
 });
-<<<<<<< HEAD
 
 app.post('/signup', async (req, res) => {
 	try{ 
@@ -71,7 +70,7 @@ app.get('/login', async (req, res) => {
 		res.status(500).json({ error: 'Failed to fetch data' });
 	}
 });
-=======
+
 	app.get('/rentals/:id', async (req, res) => {
   try {
     const id = req.params.id;
@@ -87,7 +86,5 @@ app.get('/login', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch rental' });
   }
 });
-
->>>>>>> 6f64c00 (views page)
 
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
