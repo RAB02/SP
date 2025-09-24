@@ -40,34 +40,35 @@ app.get('/rentals', async (req, res) => {
     }
 });
 
-app.get('/signin', (req, res) => {
+app.post('/signup', async (req, res) => {
+	try{ 
+		const { name, email, password } = req.body;
+		console.log(name, email, password)
+		const result = await db.run(
+		"INSERT INTO SignUp (Username, Email , Password) VALUES (?, ?, ?)", [name, email, password]);
+    	res.json({ message: "User registered!", userId: result.lastID });
 
-
-  res.send("Please use POST to sign in");
-});
-
-app.post('/signin', async (req, res) => {
-	const { username, email, password } = req.body;
-
-  	if (!username || !email || !password) {
-    	return res.status(400).send("Missing required fields");
-  	}
-
-  	try {
-    	await db.run(
-    	  "INSERT INTO SignUp (Username, Email, Password) VALUES (?, ?, ?)",
-    	  [username, email, password]
-    	);
-
-    	res.send("Account created successfully!");
-  	} catch (err) {
-    	console.error(err);
-    	res.status(500).send("⚠️ Error creating account. Username/email may already exist.");
-  	}
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error inserting into database" });
+  }
 });
 
 app.get('/login', async (req, res) => {
-	
+	const {username, password} = req.body;
+	try{
+		const users = await db.get("SELECT Username, Password FROM SignUp WHERE Username = ? AND Password = ?", [username, password]);
+		if(users){
+
+			res.json({message: "Login Successful", user});
+		}else{
+			res.json({message: "Invalid Username or Password"});
+		}
+		
+	} catch (error) {
+		console.error('Error fetching data:', error);
+		res.status(500).json({ error: 'Failed to fetch data' });
+	}
 });
 
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
