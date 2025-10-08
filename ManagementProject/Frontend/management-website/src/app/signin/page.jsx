@@ -13,7 +13,6 @@ export default function signin(){
           Fill in your details to sign up
         </p>
       </div>
-      
         <div> 
             <SignUp/>
         </div>

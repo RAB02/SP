@@ -2,6 +2,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function RentalDetails() {
   const { id } = useParams();
@@ -64,9 +65,11 @@ export default function RentalDetails() {
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
           Apply Now
         </button>
-        <button className="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded">
-          Contact
-        </button>
+        <Link href={`/contact?rental=${encodeURIComponent(rental.Apartment)}`}>
+          <button className="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded">
+            Contact
+          </button>
+        </Link>
       </div>
     </div>
   );
