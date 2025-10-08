@@ -1,11 +1,21 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams } from "next/navigation";
 
 export default function ContactForm(){
+  const searchParams = useSearchParams();
+  const rental = searchParams.get("rental");
+
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [message, setMessage] = useState("")
+  const [message, setMessage] = useState(rental ? `Hi, I'm interested in the ${rental} apartment.` : "");
+
+  useEffect(() => {
+    if (rental) {
+      setMessage(`Hi, I'm interested in the ${rental} apartment. Can you provide more details?`);
+    }
+  }, [rental]);
 
   const onSubmit = (e) => {
     e.preventDefault()
@@ -20,6 +30,7 @@ export default function ContactForm(){
           <form onSubmit={onSubmit}>
             <div className="form-header">
               <h1>Contact Form</h1>
+              {rental && <p className="text-gray-600">Regarding: {rental}</p>}
             </div>
             <div>
               

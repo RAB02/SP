@@ -55,20 +55,17 @@ app.post('/signup', async (req, res) => {
 });
 
 app.get('/login', async (req, res) => {
-	const {username, password} = req.body;
+	const {username1, password1} = req.body;
 	try{
-		const users = await db.get("SELECT Username, Password FROM SignUp WHERE Username = ? AND Password = ?", [username, password]);
-		if(users){
-
-			res.json({message: "Login Successful", user});
-		}else{
-			res.json({message: "Invalid Username or Password"});
+		const user = await db.get("SELECT Username, Password FROM SignUp WHERE Username = ? ",  [username1]);
+		if (!user){
+			return res.json({message: "Invalid Username"});
 		}
-		
-	} catch (error) {
+	}catch (error) {
 		console.error('Error fetching data:', error);
 		res.status(500).json({ error: 'Failed to fetch data' });
 	}
+	
 });
 
 	app.get('/rentals/:id', async (req, res) => {
