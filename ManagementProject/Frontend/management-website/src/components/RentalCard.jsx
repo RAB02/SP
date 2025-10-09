@@ -51,7 +51,7 @@ export default function RentalCard({rental}){
             </a>
           </div>
           <div>
-            <a href="">
+            <a href="./apply">
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-7">Apply Now</button>
             </a>
           </div>
