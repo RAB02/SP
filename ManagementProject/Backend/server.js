@@ -39,4 +39,49 @@ app.get('/rentals', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch data' });
     }
 });
+
+app.post('/signup', async (req, res) => {
+	try{ 
+		const { name, email, password } = req.body;
+		console.log(name, email, password)
+		const result = await db.run(
+		"INSERT INTO SignUp (Username, Email , Password) VALUES (?, ?, ?)", [name, email, password]);
+    	res.json({ message: "User registered!", userId: result.lastID });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error inserting into database" });
+  }
+});
+
+app.get('/login', async (req, res) => {
+	const {username1, password1} = req.body;
+	try{
+		const user = await db.get("SELECT Username, Password FROM SignUp WHERE Username = ? ",  [username1]);
+		if (!user){
+			return res.json({message: "Invalid Username"});
+		}
+	}catch (error) {
+		console.error('Error fetching data:', error);
+		res.status(500).json({ error: 'Failed to fetch data' });
+	}
+	
+});
+
+	app.get('/rentals/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const rental = await db.get("SELECT * FROM Listing WHERE ApartmentID = ?", [id]);
+
+    if (!rental) {
+      return res.status(404).json({ error: 'Rental not found' });
+    }
+
+    res.json(rental);
+  } catch (error) {
+    console.error('Error fetching rental by ID:', error);
+    res.status(500).json({ error: 'Failed to fetch rental' });
+  }
+});
+
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
