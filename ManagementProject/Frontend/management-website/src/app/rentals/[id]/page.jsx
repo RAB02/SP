@@ -98,6 +98,7 @@ export default function RentalDetails() {
           });
         }
       } catch (err) {
+        console.error(err);
         setError(true);
       }
     };

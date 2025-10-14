@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tabler/icons-react": "^3.31.0",
+    "@vis.gl/react-google-maps": "^1.5.5",
     "framer-motion": "^12.4.7",
     "next": "15.1.7",
     "react": "^19.0.0",
