@@ -22,7 +22,7 @@ app.use(cors());
 
 app.get('/rentals', async (req, res) => {
 	try {
-		const all_data = await db.all(" SELECT * FROM Listing"); 
+		const all_data = await db.all(" SELECT * FROM Listings"); 
         const rentals = [];
 		// const rentalsMap = {};
 
@@ -71,7 +71,7 @@ app.get('/login', async (req, res) => {
 	app.get('/rentals/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const rental = await db.get("SELECT * FROM Listing WHERE ApartmentID = ?", [id]);
+    const rental = await db.get("SELECT * FROM Listings WHERE ApartmentID = ?", [id]);
 
     if (!rental) {
       return res.status(404).json({ error: 'Rental not found' });
