@@ -11,6 +11,7 @@ export default function RentalDetails() {
   const [error, setError] = useState(false);
   const position = { lat: 26.3017, lng: -98.1633 };
   const [open, setOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
 
   useEffect(() => {
@@ -43,7 +44,13 @@ export default function RentalDetails() {
       {/* Top Info Box */}
       <div className="bg-gray-100 rounded-lg shadow-md p-4 mb-6">
         <div className="w-full h-48 bg-gray-300 flex items-center justify-center mb-4">
-          <span className="text-gray-600">Image Placeholder</span>
+          <img
+            src={rental.Img}
+            alt={`${rental.Apartment} image`}
+            className="w-full h-64 object-cover cursor-pointer rounded shadow"
+            onClick={() => setIsModalOpen(true)}
+          />
+
         </div>
         <h1 className="text-2xl font-bold mb-2">{rental.Apartment}</h1>
         <p className="mb-1"><strong>Rent:</strong> {rental.Pricing}</p>

@@ -82,12 +82,12 @@ app.post('/signup', async (req, res) => {
 
 
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
   try {
     const user = await db.get(
-      "SELECT * FROM SignUp WHERE Username = ?",
-      [username]
+      "SELECT * FROM SignUp WHERE Email = ?",
+      [email]
     );
 
     if (!user) {
@@ -101,11 +101,17 @@ app.post('/login', async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    // Optional: You can generate a session token or JWT later
+    
     res.json({
+      success: true,
       message: "Login successful",
-      user: { id: user.id, username: user.Username, email: user.Email }
+      user: { 
+        id: user.id,
+        username: user.Username, 
+        email: user.Email }
+        
     });
+
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Internal server error" });
