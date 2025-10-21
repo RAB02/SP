@@ -77,7 +77,10 @@ export default function RentalDetails() {
   const { id } = useParams();
   const [rental, setRental] = useState(null);
   const [error, setError] = useState(false);
-  const [position, setPosition] = useState({lat: 26.3017, lng: -98.1638});
+  const [position, setPosition] = useState({ lat: 26.3017, lng: -98.1633 });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+
 
   useEffect(() => {
     if (!id) return;
@@ -95,6 +98,7 @@ export default function RentalDetails() {
           });
         }
       } catch (err) {
+        console.error(err);
         setError(true);
       }
     };
@@ -109,7 +113,13 @@ export default function RentalDetails() {
       {/* Apartment Info */}
       <div className="bg-gray-100 rounded-lg shadow-md p-4 mb-6">
         <div className="w-full h-48 bg-gray-300 flex items-center justify-center mb-4">
-          <span className="text-gray-600">Image Placeholder</span>
+          <img
+            src={rental.Img}
+            alt={`${rental.Apartment} image`}
+            className="w-full h-64 object-cover cursor-pointer rounded shadow"
+            onClick={() => setIsModalOpen(true)}
+          />
+
         </div>
         <h1 className="text-2xl font-bold mb-2">{rental.Apartment}</h1>
         <h1 className="text-xl font-bold">Address: {rental.Address}</h1>
