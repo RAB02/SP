@@ -77,7 +77,7 @@ export default function RentalDetails() {
   const { id } = useParams();
   const [rental, setRental] = useState(null);
   const [error, setError] = useState(false);
-  const position = { lat: 26.3017, lng: -98.1633 };
+  const [position, setPosition] = useState({ lat: 26.3017, lng: -98.1633 });
   const [isModalOpen, setIsModalOpen] = useState(false);
 
 
