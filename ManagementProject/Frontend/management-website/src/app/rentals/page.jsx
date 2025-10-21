@@ -5,6 +5,8 @@ import RentalCard from "@/components/RentalCard";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
+
+
 //Frame Motion
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -31,7 +33,10 @@ const cardVariants = {
 
 //Rentals Page Component
 export default function Rentals() {
+  
   //  delcare Variables
+  const [user, setUser] = useState(null);
+
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minBeds, setMinBeds] = useState('');
@@ -110,23 +115,38 @@ export default function Rentals() {
     }
   };
 
+  useEffect(() => {
+  const storedUser = localStorage.getItem("user");
+  console.log("Loaded user:",storedUser)
+  if (storedUser) {
+    setUser(JSON.parse(storedUser));
+  }
+}, []);
   
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('http://localhost:8080/rentals');
-        const rentals_data = await response.json();
-        setRentals(rentals_data || []);
-        console.log(rentals_data)
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-    fetchData();
-  }, []);
+  const fetchData = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/rentals');
+      const rentals_data = await response.json();
+      setRentals(rentals_data || []);
+      console.log(rentals_data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const storedUser = localStorage.getItem("user");
+  if (storedUser) {
+    setUser(JSON.parse(storedUser));
+  }
+
+  fetchData();
+}, []);
+
 
   
   return (
+    
     <>
       {/* Error Message */}
       {errorMessage && (
@@ -134,6 +154,40 @@ export default function Rentals() {
           {errorMessage}
         </div>
       )}
+
+    {user && (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="text-xl font-semibold text-indigo-700 mb-4 text-center"
+      >
+        Welcome, {user.username}! 👋
+      </motion.div>
+      )}
+     
+       {/* Logout button and logic depending if logged in or not  */}
+        {user && (
+          <div className="flex justify-end w-full pr-4 mb-4">
+            <button
+              onClick={() => {
+                localStorage.removeItem("user");
+                window.location.href = "/login";
+              }}
+              className="py-1 px-3 text-sm bg-indigo-600 text-white font-semibold rounded-md shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
+            >
+              Log out
+            </button>
+          </div>
+        )}
+
+    
+
+
+
+
+
+
 
       {/* Filter Form */}
       <form onSubmit={handleFilter} className="bg-gray-100 p-4 rounded-lg mb-6 space-y-2">

@@ -2,22 +2,44 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export default function RentalCard({ rental }) {
+
+
+
+
+export default function RentalCard({ rental, user }) {
+
+
+<button
+  onClick={() => {
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+  }}
+  className="text-sm text-red-600 underline hover:text-red-800 text-center block mb-4"
+>
+  Log out
+</button>
   const petsAllowed = "OK";
   const Available = ["Available", "Now"];
 
   return (
     <div className="Card flex items-center flex-col">
-      <div className="RentalImage relative bg-black w-72 h-56 flex flex-col justify-between shadow-xl pl-1 pr-1">
-        <h1 className="text-white">Image Goes Here</h1>
+      <div className="RentalImage relative bg-black w-72 h-56 overflow-hidden rounded shadow-xl pl-1 pr-1">
+        <Link href={`/rentals/${rental.ApartmentID}`}>
+          <img
+            src={rental.Img}
+            alt={`${rental.Apartment} image`}
+            className="w-full h-full object-cover object-center cursor-pointer transition-transform duration-300 hover:scale-105"
+          />
+        </Link>
         <h1 className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-xs font-semibold p-2 rounded">
           {rental.Apartment}
         </h1>
       </div>
 
+
       <div className="CardDetails bg-white w-72 h-36 shadow-xl">
         <div className="pricing-info flex pl-1">
-          <h1 className="pr-3">Rent:</h1>
+          <h1 className="pr-3">Rent: $</h1>
           <h1 className="font-bold">{rental.Pricing}</h1>
         </div>
         <div className="apartment-info flex flex-row justify-evenly items-center text-center pt-6 pb-6">
