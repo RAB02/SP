@@ -22,24 +22,42 @@ app.use(express.json());
 app.use(cors());
 
 app.get('/rentals', async (req, res) => {
-	try {
-		const all_data = await db.all(" SELECT * FROM Listings"); 
-        const rentals = [];
-		// const rentalsMap = {};
+  const { minPrice, maxPrice, minBeds, minBaths} = req.query;
 
-		// all_data.forEach(row => {
-		// 	if (!rentalsMap[row.id]) {  // Assuming `id` is a unique identifier
-        //         rentalsMap[row.id] = { ...row }; // Store unique listings
-        //         rentals.push(rentalsMap[row.id]);
-        //     }
-        // });
-		rentals.push(all_data);
-		res.json(all_data);   
-    } catch (error) {
-        console.error('Error fetching data:', error);
-        res.status(500).json({ error: 'Failed to fetch data' });
-    }
+  let query = "SELECT * FROM Listing WHERE 1=1";
+  const params = [];
+
+  if (minPrice) {
+    query += " AND Pricing >= ?";
+    params.push(minPrice);
+  }
+
+  if (maxPrice) {
+    query += " AND Pricing <= ?";
+    params.push(maxPrice);
+  }
+
+  if (minBeds) {
+    query += " AND Bed >= ?";
+    params.push(minBeds);
+  }
+
+  if (minBaths) {
+    query += " AND Bath >= ?";
+    params.push(minBaths);
+  }
+
+ 
+
+  try {
+    const rentals = await db.all(query, params);
+    res.json(rentals);
+  } catch (error) {
+    console.error('Error fetching filtered rentals:', error);
+    res.status(500).json({ error: 'Failed to fetch rentals' });
+  }
 });
+
 
 const bcrypt = require('bcrypt');
 
