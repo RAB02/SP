@@ -24,7 +24,7 @@ app.use(cors());
 app.get('/rentals', async (req, res) => {
   const { minPrice, maxPrice, minBeds, minBaths} = req.query;
 
-  let query = "SELECT * FROM Listing WHERE 1=1";
+  let query = "SELECT * FROM Listings WHERE 1=1";
   const params = [];
 
   if (minPrice) {
