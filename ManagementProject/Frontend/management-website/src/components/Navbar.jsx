@@ -87,10 +87,10 @@ export default function Navbar() {
                 <form action="#" method="POST">
                   <MenuItem>
                     <a
-                    href="/residents"
+                    href="/about"
                     className="block px-4 py-2 text-sm text-gray-300 data-[focus]:bg-white/5 data-[focus]:text-white"
                   >
-                    Residents
+                    About
                   </a>
                   </MenuItem>
                 </form>
