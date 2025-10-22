@@ -24,7 +24,7 @@ app.use(cors());
 app.get('/rentals', async (req, res) => {
   const { minPrice, maxPrice, minBeds, minBaths} = req.query;
 
-  let query = "SELECT * FROM Listings WHERE 1=1";
+  let query = "SELECT * FROM Listing WHERE 1=1";
   const params = [];
 
   if (minPrice) {
@@ -122,7 +122,7 @@ app.post('/login', async (req, res) => {
 	app.get('/rentals/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const rental = await db.get("SELECT * FROM Listings WHERE ApartmentID = ?", [id]);
+    const rental = await db.get("SELECT * FROM Listing WHERE ApartmentID = ?", [id]);
 
     if (!rental) {
       return res.status(404).json({ error: 'Rental not found' });
