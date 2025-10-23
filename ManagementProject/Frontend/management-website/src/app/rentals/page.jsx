@@ -1,11 +1,8 @@
 'use client';
 
-
 import RentalCard from "@/components/RentalCard";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-
-
 
 //Frame Motion
 const containerVariants = {
@@ -36,7 +33,6 @@ export default function Rentals() {
   
   //  delcare Variables
   const [user, setUser] = useState(null);
-
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minBeds, setMinBeds] = useState('');
@@ -181,23 +177,15 @@ export default function Rentals() {
           </div>
         )}
 
-    
-
-
-
-
-
-
-
       {/* Filter Form */}
-      <form onSubmit={handleFilter} className="bg-gray-100 p-4 rounded-lg mb-6 space-y-2">
+      <form onSubmit={handleFilter} className="background flex justify-center bg-gray-100 p-4 rounded-lg mb-6 space-y-2">
         <div className="flex gap-4 flex-wrap">
           <input type="number" placeholder="Min Price" value={minPrice} onChange={e => setMinPrice(e.target.value)} className="p-2 border rounded w-32" />
           <input type="number" placeholder="Max Price" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} className="p-2 border rounded w-32" />
           <input type="number" placeholder="Min Beds" value={minBeds} onChange={e => setMinBeds(e.target.value)} className="p-2 border rounded w-32" />
           <input type="number" placeholder="Min Baths" value={minBaths} onChange={e => setMinBaths(e.target.value)} className="p-2 border rounded w-32" />
         </div>
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Filter</button>
+        <button type="submit" className="ml-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Filter</button>
         <button type="button" onClick={handleReset} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 ml-2">Reset Filters</button>
       </form>
 
@@ -208,7 +196,7 @@ export default function Rentals() {
         animate="show"
         className="Card flex flex-center flex-col"
       >
-        <div className="container mx-auto flex justify-evenly flex-wrap">
+        <div className="background container mx-auto flex justify-evenly flex-wrap">
           {rentals.map((rental, i) => (
             <motion.div key={rental.ApartmentID} variants={cardVariants} custom={i}>
               <RentalCard rental={rental} />

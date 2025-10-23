@@ -27,3 +27,27 @@
 .bed{
   fill: white
 }
+
+.some-color{
+  background-color: #111827;
+}
+
+.bg-primary{
+  background-color: #2563EB;
+}
+
+.background{
+  background-color: #F9FAFB;
+}
+
+.accent{
+  background-color: #3B82F6;
+}
+
+.text{
+  color: #111827;
+}
+
+.highlight{
+  background-color: #E0F2FE;
+}

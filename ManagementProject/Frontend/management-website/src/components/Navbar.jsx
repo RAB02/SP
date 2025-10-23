@@ -32,7 +32,7 @@ export default function Navbar() {
   };
 
   const linkClass = `text-lg ${
-    pathname === "/" && !isScrolled ? "text-white" : "text-black"
+    pathname === "/" && !isScrolled ? "text-white" : "text"
   }`;
 
   return (
@@ -42,22 +42,24 @@ export default function Navbar() {
           ? isScrolled
             ? "bg-white shadow-md"
             : "bg-transparent"
-          : "bg-white shadow-md"
+          : "accent" // if not home page, change background
       }`}
     >
-      <ul className="list-none flex flex-row space-x-4 w-full justify-around text-center items-center py-4">
+      <ul className="list-none flex flex-row space-x-4 w-full justify-around text-center items-center py-4 font-medium">
 
         <li>
           {/* Dropdown Menu */}
           <Menu as="div" className="relative inline-block text-center">
-            <MenuButton className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
+            <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
               TBD
               <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
             </MenuButton>
 
             <MenuItems
               transition
-              className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-800 shadow-lg outline outline-1 -outline-offset-1 outline-white/10 data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
+              className="absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-800 shadow-lg outline outline-1 -outline-offset-1 outline-white/10 
+              px-4 py-2 left-1/2 -translate-x-1/2 max-w-[90vw]
+              data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
             >
               <div className="py-1">
                 <MenuItem>
