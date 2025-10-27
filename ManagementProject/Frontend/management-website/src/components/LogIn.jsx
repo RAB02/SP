@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { UserContext } from '@/components/UserContext';
+import { useContext } from 'react';
 // import { toast } from 'react-hot-toast'; // optional: animated feedback
 
 export default function LogIn() {
@@ -9,6 +11,7 @@ export default function LogIn() {
 
   const [data, setData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const { setUser } = useContext(UserContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,6 +43,7 @@ export default function LogIn() {
         // Save user info for greeting/autofill
         console.log("Redirecting to rentals ")
         localStorage.setItem("user", JSON.stringify(result.user));
+        setUser(result.user);
         router.push("/rentals");
 
       } else {
