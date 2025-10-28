@@ -1,11 +1,8 @@
 'use client';
 
-
 import RentalCard from "@/components/RentalCard";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-
-
 
 //Frame Motion
 const containerVariants = {
@@ -36,7 +33,6 @@ export default function Rentals() {
   
   //  delcare Variables
   const [user, setUser] = useState(null);
-
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minBeds, setMinBeds] = useState('');
@@ -155,49 +151,15 @@ export default function Rentals() {
         </div>
       )}
 
-    {user && (
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-xl font-semibold text-indigo-700 mb-4 text-center"
-      >
-        Welcome, {user.username}! 👋
-      </motion.div>
-      )}
-     
-       {/* Logout button and logic depending if logged in or not  */}
-        {user && (
-          <div className="flex justify-end w-full pr-4 mb-4">
-            <button
-              onClick={() => {
-                localStorage.removeItem("user");
-                window.location.href = "/login";
-              }}
-              className="py-1 px-3 text-sm bg-indigo-600 text-white font-semibold rounded-md shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
-            >
-              Log out
-            </button>
-          </div>
-        )}
-
-    
-
-
-
-
-
-
-
       {/* Filter Form */}
-      <form onSubmit={handleFilter} className="bg-gray-100 p-4 rounded-lg mb-6 space-y-2">
+      <form onSubmit={handleFilter} className="background flex justify-center bg-gray-100 p-4 rounded-lg mb-6 space-y-2">
         <div className="flex gap-4 flex-wrap">
           <input type="number" placeholder="Min Price" value={minPrice} onChange={e => setMinPrice(e.target.value)} className="p-2 border rounded w-32" />
           <input type="number" placeholder="Max Price" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} className="p-2 border rounded w-32" />
           <input type="number" placeholder="Min Beds" value={minBeds} onChange={e => setMinBeds(e.target.value)} className="p-2 border rounded w-32" />
           <input type="number" placeholder="Min Baths" value={minBaths} onChange={e => setMinBaths(e.target.value)} className="p-2 border rounded w-32" />
         </div>
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Filter</button>
+        <button type="submit" className="ml-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Filter</button>
         <button type="button" onClick={handleReset} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 ml-2">Reset Filters</button>
       </form>
 
@@ -208,10 +170,10 @@ export default function Rentals() {
         animate="show"
         className="Card flex flex-center flex-col"
       >
-        <div className="container mx-auto flex justify-evenly flex-wrap">
+        <div className="background container mx-auto flex justify-evenly flex-wrap">
           {rentals.map((rental, i) => (
             <motion.div key={rental.ApartmentID} variants={cardVariants} custom={i}>
-              <RentalCard rental={rental} />
+              <RentalCard rental={rental} user={user} />
             </motion.div>
           ))}
         </div>

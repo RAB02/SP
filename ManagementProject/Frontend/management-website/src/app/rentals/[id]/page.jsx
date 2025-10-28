@@ -3,7 +3,15 @@ import { useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {APIProvider, Map, useMap,} from "@vis.gl/react-google-maps";
+import {APIProvider, Map, useMap, AdvancedMarker} from "@vis.gl/react-google-maps";
+
+function GlyphMarker({ position }) {
+  return (
+    <AdvancedMarker position={position} title="Rental Location">
+      <img src="/home.svg" alt="Home Icon" className="w-8 h-8" />
+    </AdvancedMarker>
+  );
+}
 
 const DatasetLayer = ({ datasetId }) => {
   const map = useMap();
@@ -80,8 +88,6 @@ export default function RentalDetails() {
   const [position, setPosition] = useState({ lat: 26.3017, lng: -98.1633 });
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-
-
   useEffect(() => {
     if (!id) return;
     const fetchRental = async () => {
@@ -140,6 +146,7 @@ export default function RentalDetails() {
             fullscreenControl={true}
           >
             <DatasetLayer datasetId="b9146f92-f35a-4b58-946e-2154c13ffb41" />
+            <GlyphMarker position={position} />
           </Map>
         </div>
       </APIProvider>
