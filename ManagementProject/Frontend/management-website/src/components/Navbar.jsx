@@ -51,7 +51,9 @@ export default function Navbar() {
       <ul className="list-none flex flex-row space-x-4 w-full justify-around text-center items-center py-4 font-medium">
 
         {/* --- Dropdown Menu --- */}
+        
         <li>
+        {user ? (
           <Menu as="div" className="relative inline-block text-center">
             <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
               TBD
@@ -65,14 +67,6 @@ export default function Navbar() {
               data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
             >
               <div className="py-1">
-                <MenuItem>
-                  <a
-                    href="/signin"
-                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                  >
-                    Sign Up
-                  </a>
-                </MenuItem>
                 <MenuItem>
                   <a
                     href="/rentals"
@@ -100,6 +94,57 @@ export default function Navbar() {
               </div>
             </MenuItems>
           </Menu>
+          ): (
+            <Menu as="div" className="relative inline-block text-center">
+              <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
+                TBD
+                <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
+              </MenuButton>
+
+              <MenuItems
+                transition
+                className="absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-800 shadow-lg outline outline-1 -outline-offset-1 outline-white/10 
+                px-4 py-2 left-1/2 -translate-x-1/2 max-w-[90vw]
+                data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
+              >
+                <div className="py-1">
+                  <MenuItem>
+                    <a
+                      href="/signin"
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                    >
+                      Sign Up
+                    </a>
+                  </MenuItem>
+                  <MenuItem>
+                    <a
+                      href="/rentals"
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                    >
+                      For Rent
+                    </a>
+                  </MenuItem>
+                  <MenuItem>
+                    <a
+                      href="/contact"
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                    >
+                      Contact
+                    </a>
+                  </MenuItem>
+                  <MenuItem>
+                    <a
+                      href="/about"
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                    >
+                      About
+                    </a>
+                  </MenuItem>
+                </div>
+              </MenuItems>
+            </Menu>
+          )
+        }
         </li>
 
         {/* --- Navigation Links --- */}

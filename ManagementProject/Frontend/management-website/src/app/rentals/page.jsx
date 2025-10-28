@@ -151,32 +151,6 @@ export default function Rentals() {
         </div>
       )}
 
-    {user && (
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-xl font-semibold text-indigo-700 mb-4 text-center"
-      >
-        Welcome, {user.username}! 👋
-      </motion.div>
-      )}
-     
-       {/* Logout button and logic depending if logged in or not  */}
-        {user && (
-          <div className="flex justify-end w-full pr-4 mb-4">
-            <button
-              onClick={() => {
-                localStorage.removeItem("user");
-                window.location.href = "/login";
-              }}
-              className="py-1 px-3 text-sm bg-indigo-600 text-white font-semibold rounded-md shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
-            >
-              Log out
-            </button>
-          </div>
-        )}
-
       {/* Filter Form */}
       <form onSubmit={handleFilter} className="background flex justify-center bg-gray-100 p-4 rounded-lg mb-6 space-y-2">
         <div className="flex gap-4 flex-wrap">
@@ -199,7 +173,7 @@ export default function Rentals() {
         <div className="background container mx-auto flex justify-evenly flex-wrap">
           {rentals.map((rental, i) => (
             <motion.div key={rental.ApartmentID} variants={cardVariants} custom={i}>
-              <RentalCard rental={rental} />
+              <RentalCard rental={rental} user={user} />
             </motion.div>
           ))}
         </div>
