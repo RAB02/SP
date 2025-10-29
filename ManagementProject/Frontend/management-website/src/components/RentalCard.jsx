@@ -3,9 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 
-
-
-
 export default function RentalCard({ rental, user }) {
 
 
@@ -26,7 +23,7 @@ export default function RentalCard({ rental, user }) {
       <div className="RentalImage relative bg-black w-72 h-56 overflow-hidden rounded shadow-xl pl-1 pr-1">
         <Link href={`/rentals/${rental.ApartmentID}`}>
           <img
-            src={rental.Img}
+            src={rental.Img ? rental.Img : "/default.jpg"}
             alt={`${rental.Apartment} image`}
             className="w-full h-full object-cover object-center cursor-pointer transition-transform duration-300 hover:scale-105"
           />

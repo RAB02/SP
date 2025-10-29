@@ -85,7 +85,7 @@ export default function Rentals() {
     try {
       const response = await fetch(`http://localhost:8080/rentals?${query}`);
       const data = await response.json();
-      setRentals(data || []);
+      setRentals(data );
       setErrorMessage('');
     } catch (error) {
       setErrorMessage("Failed to fetch rentals.");
@@ -124,7 +124,7 @@ export default function Rentals() {
     try {
       const response = await fetch('http://localhost:8080/rentals');
       const rentals_data = await response.json();
-      setRentals(rentals_data || []);
+      setRentals(rentals_data);
       console.log(rentals_data);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -171,11 +171,18 @@ export default function Rentals() {
         className="Card flex flex-center flex-col"
       >
         <div className="background container mx-auto flex justify-evenly flex-wrap">
-          {rentals.map((rental, i) => (
+          {Array.isArray(rentals) && rentals.length > 0 ? (
+            rentals.map((rental, i) => (
             <motion.div key={rental.ApartmentID} variants={cardVariants} custom={i}>
-              <RentalCard rental={rental} user={user} />
+            <RentalCard rental={rental} user={user} />
             </motion.div>
-          ))}
+            ))
+            ):(
+            <div className="text-gray-500 text-center w-full py-8">
+              No rentals available at the moment.
+            </div>
+          )}
+
         </div>
       </motion.div>
     </>

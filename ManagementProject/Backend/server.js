@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(cors());
 
 app.get('/rentals', async (req, res) => {
-  const { minPrice, maxPrice, minBeds, minBaths} = req.query;
+  const { minPrice, maxPrice, minBeds, minBaths } = req.query;
 
   let query = "SELECT * FROM Listings WHERE 1=1";
   const params = [];
@@ -47,16 +47,47 @@ app.get('/rentals', async (req, res) => {
     params.push(minBaths);
   }
 
- 
+  console.log("🧪 Final SQL:", query);
+  console.log("📦 Params:", params);
 
   try {
     const rentals = await db.all(query, params);
-    res.json(rentals);
+    console.log("📋 Raw rentals:", rentals);
+
+    if (!Array.isArray(rentals)) {
+      console.error("❌ rentals is not an array:", rentals);
+      return res.status(500).json({ error: "Unexpected data format from database" });
+    }
+
+    const rentalsWithImage = await Promise.all(
+      rentals.map(async (rental) => {
+        if (!rental.ApartmentID) {
+          console.warn("⚠️ Missing ApartmentID:", rental);
+          return { ...rental, Img: null };
+        }
+
+        const image = await db.get(
+          "SELECT Img FROM Listings WHERE ApartmentID = ? LIMIT 1",
+          [rental.ApartmentID]
+        );
+
+        return {
+          ...rental,
+          Img: image ? image.ImageURL : null,
+        };
+      })
+    );
+
+    console.log("✅ Rentals with image:", rentalsWithImage);
+    res.json(rentalsWithImage);
   } catch (error) {
-    console.error('Error fetching filtered rentals:', error);
-    res.status(500).json({ error: 'Failed to fetch rentals' });
+    console.error("🔥 Rentals route error:", error);
+    res.status(500).json({ error: "Failed to fetch rentals" });
   }
 });
+
+
+
 
 
 const bcrypt = require('bcrypt');
@@ -127,11 +158,23 @@ app.post('/login', async (req, res) => {
     if (!rental) {
       return res.status(404).json({ error: 'Rental not found' });
     }
+    const images = await db.all("SELECT ImageURL FROM ApartmentImage WHERE ApartmentID = ?", [id]);
+    const descriptions = await db.all("SELECT Description FROM ApartmentImage WHERE ApartmentID = ?", [id]);
+    console.log("Images:", images); // 👈 log image rows
+    console.log("Descriptions:", descriptions); // 👈 log description rows
 
-    res.json(rental);
+    // Combine into one object
+    const rentalWithImages = {
+      ...rental,
+      Img: images || [],
+      Des: descriptions || []
+    };
+
+    console.log("Final combined object:", rentalWithImages); // 👈 optional, for verification
+    res.json(rentalWithImages);
   } catch (error) {
-    console.error('Error fetching rental by ID:', error);
-    res.status(500).json({ error: 'Failed to fetch rental' });
+    console.error("Error fetching rental details:", error);
+    res.status(500).json({ error: "Failed to fetch rental details" });
   }
 });
 
