@@ -6,9 +6,48 @@ import Link from "next/link";
 import Image from "next/image";
 import {APIProvider, Map, useMap, AdvancedMarker} from "@vis.gl/react-google-maps";
 
-function GlyphMarker({ position }) {
+function GlyphMarker({ position, rental }) {
+  const map = useMap();
+  const infoWindowRef = useRef(null);
+  const isOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (!map || !rental) return;
+
+    const infoWindow = new google.maps.InfoWindow({
+      position: position,
+      content: `
+        <div style="font-family: sans-serif; max-width: 240px;">
+          <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 6px;">${rental?.Apartment || "Apartment"}</h3>
+          <p style="font-size: 14px; color: #555;">${rental?.Address || "Address not available"}</p>
+          <p style="font-size: 14px; color: #555;">Rent: $${rental?.Pricing || "N/A"}</p>
+        </div>
+      `,
+    });
+
+    infoWindowRef.current = infoWindow;
+
+    // No map click listener — we’ll use marker click instead
+
+    return () => {
+      infoWindow.close();
+    };
+  }, [map, rental, position]);
+
+  // Click handler for marker (toggles InfoWindow)
+  const handleMarkerClick = () => {
+    if (!infoWindowRef.current || !map) return;
+
+    if (isOpenRef.current) {
+      infoWindowRef.current.close();
+      isOpenRef.current = false;
+    } else {
+      infoWindowRef.current.open({ map });
+      isOpenRef.current = true;
+    }
+  };
   return (
-    <AdvancedMarker position={position} title="Rental Location">
+    <AdvancedMarker position={position} title="Rental Location" onClick={handleMarkerClick}>
       <img src="/home.svg" alt="Home Icon" className="w-8 h-8" />
     </AdvancedMarker>
   );
@@ -146,7 +185,7 @@ export default function RentalDetails() {
             className="w-full h-[50vh]"
           >
             <DatasetLayer datasetId="b9146f92-f35a-4b58-946e-2154c13ffb41" />
-            <GlyphMarker position={position} />
+            <GlyphMarker position={position} rental={rental}/>
           </Map>
         </APIProvider>
       </section>
