@@ -1,4 +1,5 @@
 'use client';
+import { RentalCarousel } from "@/components/RentalCarousel";
 import { useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -115,55 +116,55 @@ export default function RentalDetails() {
   if (error) return <div className="bg-white h-screen w-screen"></div>;
 
   return (
-    <div className="bg-white min-h-screen p-6 max-w-2xl mx-auto">
+    <div className="bg-white min-h-screen p-6 max-w-2xl mx-auto space-y-8">
       {/* Apartment Info */}
-      <div className="bg-gray-100 rounded-lg shadow-md p-4 mb-6">
-        <div className="w-full h-48 bg-gray-300 flex items-center justify-center mb-4">
-          <img
-            src={rental.Img}
-            alt={`${rental.Apartment} image`}
-            className="w-full h-64 object-cover cursor-pointer rounded shadow"
-            onClick={() => setIsModalOpen(true)}
-          />
+      <section className="bg-gray-100 rounded-xl shadow-md p-4 space-y-3">
+        <RentalCarousel images={rental.Img || []} />
 
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold">{rental.Apartment}</h1>
+          <p className="text-gray-600">{rental.Address}</p>
         </div>
-        <h1 className="text-2xl font-bold mb-2">{rental.Apartment}</h1>
-        <h1 className="text-xl font-bold">Address: {rental.Address}</h1>
-        <p><strong>Rent:</strong> ${rental.Pricing}</p>
-        <p><strong>Beds:</strong> {rental.Bed}</p>
-        <p><strong>Baths:</strong> {rental.Bath}</p>
-        <p><strong>Pets Allowed:</strong> OK</p>
-        <p><strong>Availability:</strong> Available Now</p>
-      </div>
 
-      {/* Map + Dataset Layer */}
-      <APIProvider apiKey="AIzaSyBhtxGJEFFZ2ml-8sawR6TC0XGe5thtFyc">
-        <div className="w-full h-[60vh] sm:h-[50vh] md:h-[400px] lg:h-[500px] mb-6 rounded-xl overflow-hidden shadow-lg border border-gray-200">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-700">
+          <p><strong>Rent:</strong> ${rental.Pricing}</p>
+          <p><strong>Beds:</strong> {rental.Bed}</p>
+          <p><strong>Baths:</strong> {rental.Bath}</p>
+          <p><strong>Pets Allowed:</strong> OK</p>
+          <p><strong>Availability:</strong> Available Now</p>
+        </div>
+      </section>
+
+      {/* Google Map */}
+      <section className="rounded-xl overflow-hidden shadow-lg border border-gray-200">
+        <APIProvider apiKey="AIzaSyBhtxGJEFFZ2ml-8sawR6TC0XGe5thtFyc">
           <Map
             defaultZoom={12}
             defaultCenter={position}
             mapId="3a1f0c586d6d8074291e19c0"
-            fullscreenControl={true}
+            fullscreenControl
+            className="w-full h-[50vh]"
           >
             <DatasetLayer datasetId="b9146f92-f35a-4b58-946e-2154c13ffb41" />
             <GlyphMarker position={position} />
           </Map>
-        </div>
-      </APIProvider>
+        </APIProvider>
+      </section>
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap sm:flex-row gap-3 justify-center mt-6">
+      <section className="flex flex-wrap justify-center gap-4">
         <Link href={`/apply?rental=${encodeURIComponent(rental.Apartment)}`}>
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">
+          <button className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow">
             Apply Now
           </button>
         </Link>
+
         <Link href={`/contact?rental=${encodeURIComponent(rental.Apartment)}`}>
-          <button className="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-lg">
+          <button className="bg-slate-500 hover:bg-slate-700 text-white font-semibold py-2 px-6 rounded-lg shadow">
             Contact
           </button>
         </Link>
-      </div>
+      </section>
     </div>
   );
 }

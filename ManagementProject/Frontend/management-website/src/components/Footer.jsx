@@ -40,7 +40,7 @@ export default function Footer() {
 
           {/* Designer Info */}
           <p className="text-xs text-center">
-            Website Designed by Ramon Bernal, Dante Peraza  &copy; {new Date().getFullYear()}
+            Website Designed by Ramon Bernal, Steven Valdez, Dante Peraza, Ian Barrera  &copy; {new Date().getFullYear()}
           </p>
 
           {/* Social Media Icons */}

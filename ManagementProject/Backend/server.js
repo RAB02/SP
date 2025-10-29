@@ -51,10 +51,25 @@ app.get('/rentals', async (req, res) => {
 
   try {
     const rentals = await db.all(query, params);
-    res.json(rentals);
+
+    const rentalsWithImage = await Promise.all(
+      rentals.map(async (rental) => {
+        const image = await db.get(
+          "SELECT ImageURL FROM ApartmentImage WHERE ApartmentID = ? LIMIT 1",
+          [rental.ApartmentID]
+        );
+
+    return {
+          ...rental,
+          Img: image ? image.ImageURL : null,
+        };
+      })
+    );
+    console.log(rentalsWithImage);
+    res.json(rentalsWithImage);
   } catch (error) {
-    console.error('Error fetching filtered rentals:', error);
-    res.status(500).json({ error: 'Failed to fetch rentals' });
+    console.error("Error fetching filtered rentals:", error);
+    res.status(500).json({ error: "Failed to fetch rentals" });
   }
 });
 
@@ -127,11 +142,23 @@ app.post('/login', async (req, res) => {
     if (!rental) {
       return res.status(404).json({ error: 'Rental not found' });
     }
+    const images = await db.all("SELECT ImageURL FROM ApartmentImage WHERE ApartmentID = ?", [id]);
+    const descriptions = await db.all("SELECT Description FROM ApartmentImage WHERE ApartmentID = ?", [id]);
+    console.log("Images:", images); // 👈 log image rows
+    console.log("Descriptions:", descriptions); // 👈 log description rows
 
-    res.json(rental);
+    // Combine into one object
+    const rentalWithImages = {
+      ...rental,
+      Img: images || [],
+      Des: descriptions || []
+    };
+
+    console.log("Final combined object:", rentalWithImages); // 👈 optional, for verification
+    res.json(rentalWithImages);
   } catch (error) {
-    console.error('Error fetching rental by ID:', error);
-    res.status(500).json({ error: 'Failed to fetch rental' });
+    console.error("Error fetching rental details:", error);
+    res.status(500).json({ error: "Failed to fetch rental details" });
   }
 });
 

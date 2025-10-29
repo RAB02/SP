@@ -164,7 +164,7 @@ export default function Navbar() {
         <li>
           {user ? (
             <Menu as="div" className="relative inline-block text-left">
-              <MenuButton className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
+              <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
                 {user.name || user.username || "User"}
                 <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
               </MenuButton>
