@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function SignUp(){
+    const Router = useRouter();
     const [data, setData] = useState({name: "", email: "", password: "", confirmPassword: ""});
     const [error, setError] = useState("");
 
@@ -36,6 +38,7 @@ export default function SignUp(){
         console.log(result);
         setData({ name: "", email: "", password: "", confirmPassword: "" });
         setError("");
+        Router.push("/login");
     }
 
     const handleChange = (e) => {
