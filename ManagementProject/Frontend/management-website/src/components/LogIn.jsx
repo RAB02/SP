@@ -1,72 +1,99 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserContext } from '@/components/UserContext';
-import { useContext } from 'react';
-// import { toast } from 'react-hot-toast'; // optional: animated feedback
 
 export default function LogIn() {
   const router = useRouter();
-
-  const [data, setData] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
   const { setUser } = useContext(UserContext);
+  const [data, setData] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (data.email === "" || data.password === "") {
-      setError("Please fill all the fields");
-      return;
-    }
-
-    setError("");
-
-    try {
-      const res = await fetch('http://localhost:8080/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
-        
-      });
-
-      const result = await res.json();
-      console.log("Parsed result " ,result);
-
-      if (result.success) {
-        // Save user info for greeting/autofill
-        console.log("Redirecting to rentals ")
-        localStorage.setItem("user", JSON.stringify(result.user));
-        setUser(result.user);
-        router.push("/rentals");
-
-      } else {
-        setError(result.message || "Login failed");
-        // toast.error("Invalid credentials");
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/verify', {
+          credentials: 'include',
+        });
+        const result = await res.json();
+        console.log("Parsed verify response:", result);
+        if (result.loggedIn) {
+          setUser(result.user);
+          router.replace('/rentals');
+        }
+      } catch (err) {
+        console.log('No active user session');
       }
+    };
 
-      setData({ email: "", password: "" });
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Something went wrong. Please try again.");
-    }
-  };
+    checkUser();
+  }, [router, setUser]);
+
+  useEffect(() => {
+    // When visiting /login, clear any admin cookie
+    fetch('http://localhost:8080/admin/logout', {
+      method: 'POST',
+      credentials: 'include',
+    }).catch(() => {});
+  }, []);
 
   const handleChange = (e) => {
     setData({ ...data, [e.target.name]: e.target.value });
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (data.email === '' || data.password === '') {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('http://localhost:8080/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // ✅ automatically stores HttpOnly cookie
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+      console.log('Parsed login response:', result);
+
+      if (!res.ok) {
+        setError(result.error || 'Invalid credentials.');
+        setLoading(false);
+        return;
+      }
+
+      if (result.success) {
+        // ✅ Let backend handle cookie
+        setUser(result.user);
+        window.dispatchEvent(new Event('userChange')); // notify Navbar instantly
+        router.push('/rentals');
+      } else {
+        setError(result.message || 'Login failed.');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Server error. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="w-2/3 min-w-[600px] bg-white box-content border-4 shadow-2xl shadow-inner p-6 rounded-2xl mt-6 md:w-3/4 md:max-w-[500px]">
+    <div className="w-2/3 min-w-[600px] bg-white border-4 shadow-2xl shadow-inner p-6 rounded-2xl mt-6 md:w-3/4 md:max-w-[500px]">
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email
+          </label>
           <input
             type="email"
             id="email"
@@ -80,7 +107,9 @@ export default function LogIn() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            Password
+          </label>
           <input
             type="password"
             id="password"
@@ -97,9 +126,12 @@ export default function LogIn() {
 
         <button
           type="submit"
-          className="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
+          disabled={loading}
+          className={`w-full py-2 px-4 font-semibold text-white rounded-lg shadow transition ${
+            loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
+          }`}
         >
-          Log In
+          {loading ? 'Logging in...' : 'Log In'}
         </button>
       </form>
     </div>

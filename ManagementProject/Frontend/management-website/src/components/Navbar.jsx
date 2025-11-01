@@ -4,13 +4,51 @@ import { useState, useEffect, useContext } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
-import { UserContext } from "./UserContext"; // 👈 import context
+import { UserContext } from "./UserContext";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
-  const { user, setUser } = useContext(UserContext); // 👈 use shared user state
+  const { user, setUser, admin, setAdmin } = useContext(UserContext);
+  const isAdminLogin = pathname === "/admin/login";
 
+  // ✅ Check both user & admin cookies on mount and when events fire
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Check admin cookie
+        const adminRes = await fetch("http://localhost:8080/admin/verify", {
+          credentials: "include",
+        });
+        const adminData = await adminRes.json();
+        setAdmin(adminData.loggedIn || false);
+
+        // Check user cookie
+        const userRes = await fetch("http://localhost:8080/verify", {
+          credentials: "include",
+        });
+        const userData = await userRes.json();
+        setUser(userData.loggedIn ? userData.user : null);
+      } catch (err) {
+        console.error("Error verifying session:", err);
+        setAdmin(false);
+        setUser(null);
+      }
+    };
+
+    checkAuth();
+
+    // 🔄 Recheck when login/logout events happen
+    window.addEventListener("userChange", checkAuth);
+    window.addEventListener("adminChange", checkAuth);
+
+    return () => {
+      window.removeEventListener("userChange", checkAuth);
+      window.removeEventListener("adminChange", checkAuth);
+    };
+  }, [setUser, setAdmin]);
+
+  // ✅ Scroll shadow effect
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     handleScroll();
@@ -18,25 +56,34 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [pathname]);
 
-  const handleGalleryClick = (e) => {
-    e.preventDefault();
-    if (pathname === "/") {
-      const gallerySection = document.getElementById("gallery");
-      if (gallerySection) gallerySection.scrollIntoView({ behavior: "smooth" });
-    } else {
-      window.location.href = "/#gallery";
+  // ✅ Logout — clears both types of cookies if present
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8080/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      await fetch("http://localhost:8080/admin/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout error:", err);
     }
-  };
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
+    setAdmin(false);
     setUser(null);
+    window.dispatchEvent(new Event("adminChange"));
+    window.dispatchEvent(new Event("userChange"));
     window.location.href = "/";
   };
 
   const linkClass = `text-lg ${
     pathname === "/" && !isScrolled ? "text-white" : "text"
   }`;
+
+  // ✅ Hide Navbar entirely on admin login page
+  if (isAdminLogin) return <nav className="py-4"></nav>;
 
   return (
     <nav
@@ -49,156 +96,154 @@ export default function Navbar() {
       }`}
     >
       <ul className="list-none flex flex-row space-x-4 w-full justify-around text-center items-center py-4 font-medium">
-
-        {/* --- Dropdown Menu --- */}
-        
-        <li>
-        {user ? (
-          <Menu as="div" className="relative inline-block text-center">
-            <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
-              TBD
-              <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
-            </MenuButton>
-
-            <MenuItems
-              transition
-              className="absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-800 shadow-lg outline outline-1 -outline-offset-1 outline-white/10 
-              px-4 py-2 left-1/2 -translate-x-1/2 max-w-[90vw]
-              data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
-            >
-              <div className="py-1">
-                <MenuItem>
-                  <a
-                    href="/rentals"
-                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+        {/* If on /admin/login, render a blank bar; otherwise render full content */}
+        {isAdminLogin ? (
+          <>
+            {/* blank nav (keeps height/spacing) */}
+          </>
+        ) : (
+          <>
+            {/* --- Dropdown Menu (Admin/User/Guest) --- */}
+            <li>
+              {admin ? (
+                <Menu as="div" className="relative inline-block text-center">
+                  <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
+                    Admin
+                    <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
+                  </MenuButton>
+                  <MenuItems
+                    transition
+                    className="absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-800 shadow-lg outline outline-1 -outline-offset-1 outline-white/10 
+                    px-4 py-2 left-1/2 -translate-x-1/2 max-w-[90vw]
+                    data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
                   >
-                    For Rent
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="/contact"
-                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                    <div className="py-1">
+                      <MenuItem>
+                        <a href="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                          Dashboard
+                        </a>
+                      </MenuItem>
+                      <MenuItem>
+                        <a href="/admin/settings" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                          Settings
+                        </a>
+                      </MenuItem>
+                    </div>
+                  </MenuItems>
+                </Menu>
+              ) : user ? (
+                <Menu as="div" className="relative inline-block text-center">
+                  <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
+                    User
+                    <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
+                  </MenuButton>
+                  <MenuItems
+                    transition
+                    className="absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-800 shadow-lg outline outline-1 -outline-offset-1 outline-white/10 
+                    px-4 py-2 left-1/2 -translate-x-1/2 max-w-[90vw]
+                    data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
                   >
-                    Contact
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="/about"
-                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                    <div className="py-1">
+                      <MenuItem>
+                        <a href="/contact" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                          Contact
+                        </a>
+                      </MenuItem>
+                      <MenuItem>
+                        <a href="/about" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                          About
+                        </a>
+                      </MenuItem>
+                    </div>
+                  </MenuItems>
+                </Menu>
+              ) : (
+                <Menu as="div" className="relative inline-block text-center">
+                  <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
+                    Guest
+                    <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
+                  </MenuButton>
+                  <MenuItems
+                    transition
+                    className="absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-800 shadow-lg outline outline-1 -outline-offset-1 outline-white/10 
+                    px-4 py-2 left-1/2 -translate-x-1/2 max-w-[90vw]
+                    data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
                   >
-                    About
-                  </a>
-                </MenuItem>
-              </div>
-            </MenuItems>
-          </Menu>
-          ): (
-            <Menu as="div" className="relative inline-block text-center">
-              <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
-                TBD
-                <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
-              </MenuButton>
+                    <div className="py-1">
+                      <MenuItem>
+                        <a href="/signin" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                          Sign Up
+                        </a>
+                      </MenuItem>
+                      <MenuItem>
+                        <a href="/contact" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                          Contact
+                        </a>
+                      </MenuItem>
+                      <MenuItem>
+                        <a href="/about" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                          About
+                        </a>
+                      </MenuItem>
+                    </div>
+                  </MenuItems>
+                </Menu>
+              )}
+            </li>
 
-              <MenuItems
-                transition
-                className="absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-800 shadow-lg outline outline-1 -outline-offset-1 outline-white/10 
-                px-4 py-2 left-1/2 -translate-x-1/2 max-w-[90vw]
-                data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
-              >
-                <div className="py-1">
-                  <MenuItem>
-                    <a
-                      href="/signin"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      Sign Up
-                    </a>
-                  </MenuItem>
-                  <MenuItem>
-                    <a
-                      href="/rentals"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      For Rent
-                    </a>
-                  </MenuItem>
-                  <MenuItem>
-                    <a
-                      href="/contact"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      Contact
-                    </a>
-                  </MenuItem>
-                  <MenuItem>
-                    <a
-                      href="/about"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      About
-                    </a>
-                  </MenuItem>
-                </div>
-              </MenuItems>
-            </Menu>
-          )
-        }
-        </li>
+            {/* --- Navigation Links (hidden when admin) --- */}
+            {admin ? (
+              <></>
+            ) : (
+              <>
+                <li>
+                  <a href="/" className={linkClass}>Home</a>
+                </li>
+                <li>
+                  <a href="/rentals" className={linkClass}>For Rent</a>
+                </li>
+              </>
+            )}
 
-        {/* --- Navigation Links --- */}
-        <li>
-          <a href="/" className={linkClass}>
-            Home
-          </a>
-        </li>
-
-        <li>
-          <a href="#gallery" onClick={handleGalleryClick} className={linkClass}>
-            Gallery
-          </a>
-        </li>
-
-        {/* --- Log In / User Dropdown --- */}
-        <li>
-          {user ? (
-            <Menu as="div" className="relative inline-block text-left">
-              <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
-                {user.name || user.username || "User"}
-                <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
-              </MenuButton>
-
-              <MenuItems
-                transition
-                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-              >
-                <div className="py-1">
-                  <MenuItem>
-                    <a
-                      href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+            {/* --- Log In / User Dropdown (hidden when admin) --- */}
+            {admin ? (
+              <></>
+            ) : (
+              <li>
+                {user ? (
+                  <Menu as="div" className="relative inline-block text-left">
+                    <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
+                      {user.name || user.username || "User"}
+                      <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
+                    </MenuButton>
+                    <MenuItems
+                      transition
+                      className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
                     >
-                      Profile
-                    </a>
-                  </MenuItem>
-                  <MenuItem>
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      Log Out
-                    </button>
-                  </MenuItem>
-                </div>
-              </MenuItems>
-            </Menu>
-          ) : (
-            <a href="/login" className={linkClass}>
-              Log In
-            </a>
-          )}
-        </li>
+                      <div className="py-1">
+                        <MenuItem>
+                          <a href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                            Profile
+                          </a>
+                        </MenuItem>
+                        <MenuItem>
+                          <button
+                            onClick={handleLogout}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                          >
+                            Log Out
+                          </button>
+                        </MenuItem>
+                      </div>
+                    </MenuItems>
+                  </Menu>
+                ) : (
+                  <a href="/login" className={linkClass}>Log In</a>
+                )}
+              </li>
+            )}
+          </>
+        )}
       </ul>
     </nav>
   );
