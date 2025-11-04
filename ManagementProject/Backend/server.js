@@ -3,7 +3,10 @@ const path = require('path');
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
 const cors  = require('cors');
-
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+const { verifyAdmin, verifyAdminStatus } = require('./middleware/authAdmin.js');
+const SECRET_KEY = 'SECRET_KEY';
 
 PORT=8080;
 
@@ -11,15 +14,19 @@ PORT=8080;
 let db;
 (async () => {
 	db = await open({
-		filename: 'Management_Data.db',
+		filename: './db/Management_Data.db',
 		driver: sqlite3.Database
 	});
 })();
-
 app = express();
 app.use(express.static(path.join(__dirname, 'static')));
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+  }
+));
+app.use(cookieParser());
 
 app.get('/rentals', async (req, res) => {
   const { minPrice, maxPrice, minBeds, minBaths} = req.query;
@@ -116,7 +123,24 @@ app.post('/login', async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.Email,
+        username: user.Username,
+        role: 'user',
+      },
+      SECRET_KEY,
+      { expiresIn: '1h' } // expires in 1 hour
+    );
+
+    res.cookie('userToken', token, {
+      httpOnly: true,
+      secure: false, // set to true in production with HTTPS
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 1000, // 1 hour
+    });
+
     res.json({
       success: true,
       message: "Login successful",
@@ -134,6 +158,31 @@ app.post('/login', async (req, res) => {
   }
 });
 
+app.get('/verify', (req, res) => {
+  const token = req.cookies?.userToken;
+  if (!token) {
+    return res.status(401).json({ loggedIn: false });
+  }
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    res.json({
+      loggedIn: true,
+      user: { id: decoded.id, email: decoded.email, username: decoded.username },
+    });
+  } catch (err) {
+    res.status(401).json({ loggedIn: false });
+  }
+});
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('userToken', {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'lax',
+  });
+  res.json({ success: true, message: 'User logged out' });
+});
 
 	app.get('/rentals/:id', async (req, res) => {
   try {
@@ -160,6 +209,73 @@ app.post('/login', async (req, res) => {
   } catch (error) {
     console.error("Error fetching rental details:", error);
     res.status(500).json({ error: "Failed to fetch rental details" });
+  }
+});
+
+// ✅ Admin login route
+app.post('/admin/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const admin = await db.get('SELECT * FROM admin WHERE email = ?', [email]);
+    if (!admin) return res.status(400).json({ error: 'Invalid admin username' });
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) return res.status(400).json({ error: 'Invalid password' });
+
+    const token = jwt.sign(
+      { id: admin.id, email: admin.email, role: 'admin' },
+      SECRET_KEY,
+      { expiresIn: '1h' }
+    );
+
+    // ✅ Set cookie
+    res.cookie('adminToken', token, {
+      httpOnly: true, 
+      secure: false, 
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.json({
+      success: true,
+      message: 'Admin login successful',
+      admin: { id: admin.id, email: admin.email },
+    });
+
+    console.log('✅ Admin logged in:', admin.email);
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/admin/logout', (req, res) => {
+  res.clearCookie('adminToken', {
+    httpOnly: true,
+    secure: false,   
+    sameSite: 'lax'
+  });
+  res.json({ success: true, message: 'Admin logged out' });
+});
+
+app.get('/admin/verify', verifyAdminStatus);
+
+app.get('/admin/dashboard', verifyAdmin, async (req, res) => {
+  try {
+    const apartments = await db.get('SELECT COUNT(*) AS count FROM Listings');
+    const users = await db.get('SELECT COUNT(*) AS count FROM SignUp');
+    console.log('Parsed admin dashboard response:', apartments, users)
+
+
+    res.json({
+      apartmentCount: apartments.count,
+      userCount: users.count,
+      adminEmail: req.admin.email,
+    });
+  } catch (error) {
+    console.error('Error fetching admin dashboard:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard data' });
   }
 });
 
