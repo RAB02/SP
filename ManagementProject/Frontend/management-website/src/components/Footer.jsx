@@ -1,5 +1,5 @@
-import Image from 'next/image';
-import { FaFacebookF, FaGoogle, FaInstagram } from 'react-icons/fa';
+import Image from "next/image";
+import { FaFacebookF, FaGoogle, FaInstagram } from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -7,7 +7,9 @@ export default function Footer() {
       <div className="container mx-auto flex flex-col items-center">
         {/* Logo */}
         <div className="text-center mb-4">
-          <h1 className="text-white text-2xl font-bold tracking-wide">Apartment Management</h1>
+          <h1 className="text-white text-2xl font-bold tracking-wide">
+            Apartment Management
+          </h1>
           {/* <p className="text-xs">Management</p> */}
         </div>
 
@@ -27,27 +29,42 @@ export default function Footer() {
 
         {/* Links Section */}
         <div className="flex flex-wrap justify-center gap-4 text-xs mb-4">
-          <a href="#" className="hover:text-white">Privacy</a>
-          <a href="#" className="hover:text-white">Disclaimer</a>
-          <a href="#" className="hover:text-white">Accessibility</a>
-          <a href="#" className="hover:text-white">Site Map</a>
-          <a href="#" className="hover:text-white">Do Not Sell My Personal Information</a>
+          <a href="#" className="hover:text-white">
+            Privacy
+          </a>
+          <a href="#" className="hover:text-white">
+            Disclaimer
+          </a>
+          <a href="#" className="hover:text-white">
+            Accessibility
+          </a>
+          <a href="#" className="hover:text-white">
+            Site Map
+          </a>
+          <a href="#" className="hover:text-white">
+            Do Not Sell My Personal Information
+          </a>
         </div>
 
         {/* Bottom Section */}
         <div className="flex justify-between w-full max-w-5xl items-center">
-          
-
           {/* Designer Info */}
           <p className="text-xs text-center">
-            Website Designed by Ramon Bernal, Steven Valdez, Dante Peraza, Ian Barrera  &copy; {new Date().getFullYear()}
+            Website Designed by Ramon Bernal, Steven Valdez, Dante Peraza, Ian
+            Barrera &copy; {new Date().getFullYear()}
           </p>
 
           {/* Social Media Icons */}
           <div className="flex space-x-4">
-            <a href="#" className="hover:text-white"><FaFacebookF size={16} /></a>
-            <a href="#" className="hover:text-white"><FaGoogle size={16} /></a>
-            <a href="#" className="hover:text-white"><FaInstagram size={16} /></a>
+            <a href="#" className="hover:text-white">
+              <FaFacebookF size={16} />
+            </a>
+            <a href="#" className="hover:text-white">
+              <FaGoogle size={16} />
+            </a>
+            <a href="#" className="hover:text-white">
+              <FaInstagram size={16} />
+            </a>
           </div>
         </div>
       </div>

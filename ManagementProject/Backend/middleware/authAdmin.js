@@ -1,21 +1,21 @@
-import jwt from 'jsonwebtoken';
-const SECRET_KEY = 'SECRET_KEY';
+import jwt from "jsonwebtoken";
+const SECRET_KEY = "SECRET_KEY";
 
 /**
  * 🔹 Shared verification logic — used by both middleware and verify route
  */
 function decodeAdminToken(req) {
   const token = req.cookies?.adminToken;
-  if (!token) return { valid: false, reason: 'No token found' };
+  if (!token) return { valid: false, reason: "No token found" };
 
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
-    if (decoded.role !== 'admin') {
-      return { valid: false, reason: 'Not admin' };
+    if (decoded.role !== "admin") {
+      return { valid: false, reason: "Not admin" };
     }
     return { valid: true, decoded };
   } catch (err) {
-    return { valid: false, reason: 'Invalid or expired token' };
+    return { valid: false, reason: "Invalid or expired token" };
   }
 }
 
@@ -43,10 +43,10 @@ export function verifyAdminStatus(req, res) {
 export function verifyAdmin(req, res, next) {
   const { valid, decoded, reason } = decodeAdminToken(req);
   if (!valid) {
-    console.error('verifyAdmin:', reason);
+    console.error("verifyAdmin:", reason);
     return res.status(401).json({ error: reason });
   }
 
   req.admin = decoded;
-  next(); 
+  next();
 }

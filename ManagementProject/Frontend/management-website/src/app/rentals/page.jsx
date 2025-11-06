@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import RentalCard from "@/components/RentalCard";
 import { motion } from "framer-motion";
@@ -30,21 +30,20 @@ const cardVariants = {
 
 //Rentals Page Component
 export default function Rentals() {
-  
   //  delcare Variables
   const [user, setUser] = useState(null);
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [minBeds, setMinBeds] = useState('');
-  const [minBaths, setMinBaths] = useState('');
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minBeds, setMinBeds] = useState("");
+  const [minBaths, setMinBaths] = useState("");
   const [petsAllowed, setPetsAllowed] = useState(false);
   const [rentals, setRentals] = useState([]);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Filter Handler
   const handleFilter = async (e) => {
     e.preventDefault();
-    setErrorMessage('');
+    setErrorMessage("");
 
     // Input Validation
     if (
@@ -78,7 +77,7 @@ export default function Rentals() {
       ...(maxPrice && { maxPrice }),
       ...(minBeds && { minBeds }),
       ...(minBaths && { minBaths }),
-      petsAllowed: petsAllowed.toString()
+      petsAllowed: petsAllowed.toString(),
     }).toString();
 
     // Fetch Filtered Rentals
@@ -86,81 +85,115 @@ export default function Rentals() {
       const response = await fetch(`http://localhost:8080/rentals?${query}`);
       const data = await response.json();
       setRentals(data || []);
-      setErrorMessage('');
+      setErrorMessage("");
     } catch (error) {
       setErrorMessage("Failed to fetch rentals.");
-      console.error('Error fetching filtered rentals:', error);
+      console.error("Error fetching filtered rentals:", error);
     }
   };
 
   // Reset Filters Handler
   const handleReset = async () => {
-    setMinPrice('');
-    setMaxPrice('');
-    setMinBeds('');
-    setMinBaths('');
+    setMinPrice("");
+    setMaxPrice("");
+    setMinBeds("");
+    setMinBaths("");
     setPetsAllowed(false);
-    setErrorMessage('');
+    setErrorMessage("");
 
     try {
-      const response = await fetch('http://localhost:8080/rentals');
+      const response = await fetch("http://localhost:8080/rentals");
       const data = await response.json();
+      console.log(data);
       setRentals(data || []);
     } catch (error) {
-      console.error('Error resetting filters:', error);
+      console.error("Error resetting filters:", error);
     }
   };
 
   useEffect(() => {
-  const storedUser = localStorage.getItem("user");
-  console.log("Loaded user:",storedUser)
-  if (storedUser) {
-    setUser(JSON.parse(storedUser));
-  }
-}, []);
-  
-  useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/rentals');
-      const rentals_data = await response.json();
-      setRentals(rentals_data || []);
-      console.log(rentals_data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    const storedUser = localStorage.getItem("user");
+    console.log("Loaded user:", storedUser);
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
-  };
+  }, []);
 
-  const storedUser = localStorage.getItem("user");
-  if (storedUser) {
-    setUser(JSON.parse(storedUser));
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/rentals");
+        const rentals_data = await response.json();
+        setRentals(rentals_data || []);
+        console.log(rentals_data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
 
-  fetchData();
-}, []);
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
 
+    fetchData();
+  }, []);
 
-  
   return (
-    
     <>
       {/* Error Message */}
       {errorMessage && (
-        <div className="text-red-600 font-semibold mb-4">
-          {errorMessage}
-        </div>
+        <div className="text-red-600 font-semibold mb-4">{errorMessage}</div>
       )}
 
       {/* Filter Form */}
-      <form onSubmit={handleFilter} className="background flex justify-center bg-gray-100 p-4 rounded-lg mb-6 space-y-2">
+      <form
+        onSubmit={handleFilter}
+        className="background flex justify-center bg-gray-100 p-4 rounded-lg mb-6 space-y-2"
+      >
         <div className="flex gap-4 flex-wrap">
-          <input type="number" placeholder="Min Price" value={minPrice} onChange={e => setMinPrice(e.target.value)} className="p-2 border rounded w-32" />
-          <input type="number" placeholder="Max Price" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} className="p-2 border rounded w-32" />
-          <input type="number" placeholder="Min Beds" value={minBeds} onChange={e => setMinBeds(e.target.value)} className="p-2 border rounded w-32" />
-          <input type="number" placeholder="Min Baths" value={minBaths} onChange={e => setMinBaths(e.target.value)} className="p-2 border rounded w-32" />
+          <input
+            type="number"
+            placeholder="Min Price"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            className="p-2 border rounded w-32"
+          />
+          <input
+            type="number"
+            placeholder="Max Price"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            className="p-2 border rounded w-32"
+          />
+          <input
+            type="number"
+            placeholder="Min Beds"
+            value={minBeds}
+            onChange={(e) => setMinBeds(e.target.value)}
+            className="p-2 border rounded w-32"
+          />
+          <input
+            type="number"
+            placeholder="Min Baths"
+            value={minBaths}
+            onChange={(e) => setMinBaths(e.target.value)}
+            className="p-2 border rounded w-32"
+          />
         </div>
-        <button type="submit" className="ml-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Filter</button>
-        <button type="button" onClick={handleReset} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 ml-2">Reset Filters</button>
+        <button
+          type="submit"
+          className="ml-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Filter
+        </button>
+        <button
+          type="button"
+          onClick={handleReset}
+          className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 ml-2"
+        >
+          Reset Filters
+        </button>
       </form>
 
       {/*Rental Cards Display */}
@@ -172,8 +205,12 @@ export default function Rentals() {
       >
         <div className="background container mx-auto flex justify-evenly flex-wrap">
           {rentals.map((rental, i) => (
-            <motion.div key={rental.ApartmentID} variants={cardVariants} custom={i}>
-              <RentalCard rental={rental} user={user} />
+            <motion.div
+              key={rental.apartment_id}
+              variants={cardVariants}
+              custom={i}
+            >
+              <RentalCard rental={rental} />
             </motion.div>
           ))}
         </div>

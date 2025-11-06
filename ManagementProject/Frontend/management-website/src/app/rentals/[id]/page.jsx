@@ -1,10 +1,14 @@
-'use client';
+"use client";
 import { RentalCarousel } from "@/components/RentalCarousel";
 import { useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import {APIProvider, Map, useMap, AdvancedMarker} from "@vis.gl/react-google-maps";
+import {
+  APIProvider,
+  Map,
+  useMap,
+  AdvancedMarker,
+} from "@vis.gl/react-google-maps";
 
 function GlyphMarker({ position, rental }) {
   const map = useMap();
@@ -18,9 +22,15 @@ function GlyphMarker({ position, rental }) {
       position: position,
       content: `
         <div style="font-family: sans-serif; max-width: 240px;">
-          <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 6px;">${rental?.Apartment || "Apartment"}</h3>
-          <p style="font-size: 14px; color: #555;">${rental?.Address || "Address not available"}</p>
-          <p style="font-size: 14px; color: #555;">Rent: $${rental?.Pricing || "N/A"}</p>
+          <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 6px;">${
+            rental?.apartment_name || "Apartment"
+          }</h3>
+          <p style="font-size: 14px; color: #555;">${
+            rental?.address || "Address not available"
+          }</p>
+          <p style="font-size: 14px; color: #555;">Rent: $${
+            rental?.pricing || "N/A"
+          }</p>
         </div>
       `,
     });
@@ -47,7 +57,11 @@ function GlyphMarker({ position, rental }) {
     }
   };
   return (
-    <AdvancedMarker position={position} title="Rental Location" onClick={handleMarkerClick}>
+    <AdvancedMarker
+      position={position}
+      title="Rental Location"
+      onClick={handleMarkerClick}
+    >
       <img src="/home.svg" alt="Home Icon" className="w-8 h-8" />
     </AdvancedMarker>
   );
@@ -82,11 +96,17 @@ const DatasetLayer = ({ datasetId }) => {
       datasetLayer.style = styleDefault;
 
       const feature = e.features[0];
-      const school_name = feature.datasetAttributes?.["USER_School_Name"] || "Unnamed Feature";
-      const addy = feature.datasetAttributes?.["StAddr"] || "No level data available";
-      const school_type = feature.datasetAttributes?.["School_Type"] || "No level data available";
-      const phone = feature.datasetAttributes?.["USER_School_Phone"] || "No level data available";
-      const score = feature.datasetAttributes?.["Score"] || "No score available";
+      const school_name =
+        feature.datasetAttributes?.["USER_School_Name"] || "Unnamed Feature";
+      const addy =
+        feature.datasetAttributes?.["StAddr"] || "No level data available";
+      const school_type =
+        feature.datasetAttributes?.["School_Type"] || "No level data available";
+      const phone =
+        feature.datasetAttributes?.["USER_School_Phone"] ||
+        "No level data available";
+      const score =
+        feature.datasetAttributes?.["Score"] || "No score available";
 
       // Close previous InfoWindow
       if (infoWindowRef.current) {
@@ -126,7 +146,6 @@ export default function RentalDetails() {
   const [rental, setRental] = useState(null);
   const [error, setError] = useState(false);
   const [position, setPosition] = useState({ lat: 26.3017, lng: -98.1633 });
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -151,7 +170,8 @@ export default function RentalDetails() {
     fetchRental();
   }, [id]);
 
-  if (!rental && !error) return <div className="bg-white h-screen w-screen"></div>;
+  if (!rental && !error)
+    return <div className="bg-white h-screen w-screen"></div>;
   if (error) return <div className="bg-white h-screen w-screen"></div>;
 
   return (
@@ -161,16 +181,26 @@ export default function RentalDetails() {
         <RentalCarousel images={rental.Img || []} />
 
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold">{rental.Apartment}</h1>
-          <p className="text-gray-600">{rental.Address}</p>
+          <h1 className="text-2xl font-bold">{rental.apartment_name}</h1>
+          <p className="text-gray-600">{rental.address}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-700">
-          <p><strong>Rent:</strong> ${rental.Pricing}</p>
-          <p><strong>Beds:</strong> {rental.Bed}</p>
-          <p><strong>Baths:</strong> {rental.Bath}</p>
-          <p><strong>Pets Allowed:</strong> OK</p>
-          <p><strong>Availability:</strong> Available Now</p>
+          <p>
+            <strong>Rent:</strong> ${rental.pricing}
+          </p>
+          <p>
+            <strong>Beds:</strong> {rental.bed}
+          </p>
+          <p>
+            <strong>Baths:</strong> {rental.bath}
+          </p>
+          <p>
+            <strong>Pets Allowed:</strong> OK
+          </p>
+          <p>
+            <strong>Availability:</strong> Available Now
+          </p>
         </div>
       </section>
 
@@ -185,20 +215,24 @@ export default function RentalDetails() {
             className="w-full h-[50vh]"
           >
             <DatasetLayer datasetId="b9146f92-f35a-4b58-946e-2154c13ffb41" />
-            <GlyphMarker position={position} rental={rental}/>
+            <GlyphMarker position={position} rental={rental} />
           </Map>
         </APIProvider>
       </section>
 
       {/* Action Buttons */}
       <section className="flex flex-wrap justify-center gap-4">
-        <Link href={`/apply?rental=${encodeURIComponent(rental.Apartment)}`}>
+        <Link
+          href={`/apply?rental=${encodeURIComponent(rental.apartment_name)}`}
+        >
           <button className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow">
             Apply Now
           </button>
         </Link>
 
-        <Link href={`/contact?rental=${encodeURIComponent(rental.Apartment)}`}>
+        <Link
+          href={`/contact?rental=${encodeURIComponent(rental.apartment_name)}`}
+        >
           <button className="bg-slate-500 hover:bg-slate-700 text-white font-semibold py-2 px-6 rounded-lg shadow">
             Contact
           </button>
