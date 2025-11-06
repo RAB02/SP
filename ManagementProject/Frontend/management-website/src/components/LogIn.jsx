@@ -1,30 +1,30 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useContext } from 'react';
-import { useRouter } from 'next/navigation';
-import { UserContext } from '@/components/UserContext';
+import React, { useState, useEffect, useContext } from "react";
+import { useRouter } from "next/navigation";
+import { UserContext } from "@/components/UserContext";
 
 export default function LogIn() {
   const router = useRouter();
   const { setUser } = useContext(UserContext);
-  const [data, setData] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
+  const [data, setData] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const res = await fetch('http://localhost:8080/verify', {
-          credentials: 'include',
+        const res = await fetch("http://localhost:8080/verify", {
+          credentials: "include",
         });
         const result = await res.json();
         console.log("Parsed verify response:", result);
         if (result.loggedIn) {
           setUser(result.user);
-          router.replace('/rentals');
+          router.replace("/rentals");
         }
       } catch (err) {
-        console.log('No active user session');
+        console.log("No active user session");
       }
     };
 
@@ -33,9 +33,9 @@ export default function LogIn() {
 
   useEffect(() => {
     // When visiting /login, clear any admin cookie
-    fetch('http://localhost:8080/admin/logout', {
-      method: 'POST',
-      credentials: 'include',
+    fetch("http://localhost:8080/admin/logout", {
+      method: "POST",
+      credentials: "include",
     }).catch(() => {});
   }, []);
 
@@ -46,27 +46,27 @@ export default function LogIn() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (data.email === '' || data.password === '') {
-      setError('Please fill in all fields');
+    if (data.email === "" || data.password_hash === "") {
+      setError("Please fill in all fields");
       return;
     }
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const res = await fetch('http://localhost:8080/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // ✅ automatically stores HttpOnly cookie
+      const res = await fetch("http://localhost:8080/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ automatically stores HttpOnly cookie
         body: JSON.stringify(data),
       });
 
       const result = await res.json();
-      console.log('Parsed login response:', result);
+      console.log("Parsed login response:", result);
 
       if (!res.ok) {
-        setError(result.error || 'Invalid credentials.');
+        setError(result.error || "Invalid credentials.");
         setLoading(false);
         return;
       }
@@ -74,14 +74,14 @@ export default function LogIn() {
       if (result.success) {
         // ✅ Let backend handle cookie
         setUser(result.user);
-        window.dispatchEvent(new Event('userChange')); // notify Navbar instantly
-        router.push('/rentals');
+        window.dispatchEvent(new Event("userChange")); // notify Navbar instantly
+        router.push("/rentals");
       } else {
-        setError(result.message || 'Login failed.');
+        setError(result.message || "Login failed.");
       }
     } catch (err) {
-      console.error('Login error:', err);
-      setError('Server error. Please try again later.');
+      console.error("Login error:", err);
+      setError("Server error. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -91,7 +91,10 @@ export default function LogIn() {
     <div className="w-2/3 min-w-[600px] bg-white border-4 shadow-2xl shadow-inner p-6 rounded-2xl mt-6 md:w-3/4 md:max-w-[500px]">
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700"
+          >
             Email
           </label>
           <input
@@ -107,7 +110,10 @@ export default function LogIn() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700"
+          >
             Password
           </label>
           <input
@@ -115,7 +121,7 @@ export default function LogIn() {
             id="password"
             name="password"
             placeholder="********"
-            value={data.password}
+            value={data.password_hash}
             onChange={handleChange}
             required
             className="w-full px-3 py-2 border rounded-md"
@@ -128,10 +134,12 @@ export default function LogIn() {
           type="submit"
           disabled={loading}
           className={`w-full py-2 px-4 font-semibold text-white rounded-lg shadow transition ${
-            loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
+            loading
+              ? "bg-indigo-400 cursor-not-allowed"
+              : "bg-indigo-600 hover:bg-indigo-700"
           }`}
         >
-          {loading ? 'Logging in...' : 'Log In'}
+          {loading ? "Logging in..." : "Log In"}
         </button>
       </form>
     </div>

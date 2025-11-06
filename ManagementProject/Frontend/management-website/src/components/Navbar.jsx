@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useContext } from "react";
 import { usePathname } from "next/navigation";
@@ -98,9 +98,7 @@ export default function Navbar() {
       <ul className="list-none flex flex-row space-x-4 w-full justify-around text-center items-center py-4 font-medium">
         {/* If on /admin/login, render a blank bar; otherwise render full content */}
         {isAdminLogin ? (
-          <>
-            {/* blank nav (keeps height/spacing) */}
-          </>
+          <>{/* blank nav (keeps height/spacing) */}</>
         ) : (
           <>
             {/* --- Dropdown Menu (Admin/User/Guest) --- */}
@@ -109,7 +107,10 @@ export default function Navbar() {
                 <Menu as="div" className="relative inline-block text-center">
                   <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
                     Admin
-                    <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
+                    <ChevronDownIcon
+                      aria-hidden="true"
+                      className="-mr-1 h-5 w-5"
+                    />
                   </MenuButton>
                   <MenuItems
                     transition
@@ -119,13 +120,27 @@ export default function Navbar() {
                   >
                     <div className="py-1">
                       <MenuItem>
-                        <a href="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                        <a
+                          href="/admin/dashboard"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
                           Dashboard
                         </a>
                       </MenuItem>
                       <MenuItem>
-                        <a href="/admin/settings" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                          Settings
+                        <a
+                          href="/admin/lease"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
+                          Leases and Payments
+                        </a>
+                      </MenuItem>
+                      <MenuItem>
+                        <a
+                          onClick={handleLogout}
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
+                          Log Out
                         </a>
                       </MenuItem>
                     </div>
@@ -135,7 +150,10 @@ export default function Navbar() {
                 <Menu as="div" className="relative inline-block text-center">
                   <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
                     User
-                    <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
+                    <ChevronDownIcon
+                      aria-hidden="true"
+                      className="-mr-1 h-5 w-5"
+                    />
                   </MenuButton>
                   <MenuItems
                     transition
@@ -145,12 +163,18 @@ export default function Navbar() {
                   >
                     <div className="py-1">
                       <MenuItem>
-                        <a href="/contact" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                        <a
+                          href="/contact"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
                           Contact
                         </a>
                       </MenuItem>
                       <MenuItem>
-                        <a href="/about" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                        <a
+                          href="/about"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
                           About
                         </a>
                       </MenuItem>
@@ -161,7 +185,10 @@ export default function Navbar() {
                 <Menu as="div" className="relative inline-block text-center">
                   <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
                     Guest
-                    <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
+                    <ChevronDownIcon
+                      aria-hidden="true"
+                      className="-mr-1 h-5 w-5"
+                    />
                   </MenuButton>
                   <MenuItems
                     transition
@@ -171,17 +198,26 @@ export default function Navbar() {
                   >
                     <div className="py-1">
                       <MenuItem>
-                        <a href="/signin" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                        <a
+                          href="/signin"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
                           Sign Up
                         </a>
                       </MenuItem>
                       <MenuItem>
-                        <a href="/contact" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                        <a
+                          href="/contact"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
                           Contact
                         </a>
                       </MenuItem>
                       <MenuItem>
-                        <a href="/about" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                        <a
+                          href="/about"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
                           About
                         </a>
                       </MenuItem>
@@ -197,10 +233,14 @@ export default function Navbar() {
             ) : (
               <>
                 <li>
-                  <a href="/" className={linkClass}>Home</a>
+                  <a href="/" className={linkClass}>
+                    Home
+                  </a>
                 </li>
                 <li>
-                  <a href="/rentals" className={linkClass}>For Rent</a>
+                  <a href="/rentals" className={linkClass}>
+                    For Rent
+                  </a>
                 </li>
               </>
             )}
@@ -214,7 +254,10 @@ export default function Navbar() {
                   <Menu as="div" className="relative inline-block text-left">
                     <MenuButton className="some-color inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none">
                       {user.name || user.username || "User"}
-                      <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5" />
+                      <ChevronDownIcon
+                        aria-hidden="true"
+                        className="-mr-1 h-5 w-5"
+                      />
                     </MenuButton>
                     <MenuItems
                       transition
@@ -222,7 +265,10 @@ export default function Navbar() {
                     >
                       <div className="py-1">
                         <MenuItem>
-                          <a href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                          <a
+                            href="/profile"
+                            className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                          >
                             Profile
                           </a>
                         </MenuItem>
@@ -238,7 +284,9 @@ export default function Navbar() {
                     </MenuItems>
                   </Menu>
                 ) : (
-                  <a href="/login" className={linkClass}>Log In</a>
+                  <a href="/login" className={linkClass}>
+                    Log In
+                  </a>
                 )}
               </li>
             )}

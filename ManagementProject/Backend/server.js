@@ -1,74 +1,72 @@
-const express = require('express');
-const path = require('path');
-const sqlite3 = require('sqlite3');
-const { open } = require('sqlite');
-const cors  = require('cors');
-const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
-const { verifyAdmin, verifyAdminStatus } = require('./middleware/authAdmin.js');
-const SECRET_KEY = 'SECRET_KEY';
+const express = require("express");
+const path = require("path");
+const sqlite3 = require("sqlite3");
+const { open } = require("sqlite");
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const { verifyAdmin, verifyAdminStatus } = require("./middleware/authAdmin.js");
+const SECRET_KEY = "SECRET_KEY";
 
-PORT=8080;
+PORT = 8080;
 
 // connect to db
 let db;
 (async () => {
-	db = await open({
-		filename: './db/Management_Data.db',
-		driver: sqlite3.Database
-	});
+  db = await open({
+    filename: "./db/new_management.db",
+    driver: sqlite3.Database,
+  });
 })();
 app = express();
-app.use(express.static(path.join(__dirname, 'static')));
+app.use(express.static(path.join(__dirname, "static")));
 app.use(express.json());
-app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true
-  }
-));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 app.use(cookieParser());
 
-app.get('/rentals', async (req, res) => {
-  const { minPrice, maxPrice, minBeds, minBaths} = req.query;
+app.get("/rentals", async (req, res) => {
+  const { minPrice, maxPrice, minBeds, minBaths } = req.query;
 
-  let query = "SELECT * FROM Listings WHERE 1=1";
+  let query = "SELECT * FROM Apartments WHERE 1=1 AND is_occupied = 0";
   const params = [];
 
   if (minPrice) {
-    query += " AND Pricing >= ?";
+    query += " AND pricing  >= ?";
     params.push(minPrice);
   }
 
   if (maxPrice) {
-    query += " AND Pricing <= ?";
+    query += " AND pricing <= ?";
     params.push(maxPrice);
   }
 
   if (minBeds) {
-    query += " AND Bed >= ?";
+    query += " AND bed >= ?";
     params.push(minBeds);
   }
 
   if (minBaths) {
-    query += " AND Bath >= ?";
+    query += " AND bath >= ?";
     params.push(minBaths);
   }
 
- 
-
   try {
     const rentals = await db.all(query, params);
-
     const rentalsWithImage = await Promise.all(
       rentals.map(async (rental) => {
         const image = await db.get(
-          "SELECT ImageURL FROM ApartmentImage WHERE ApartmentID = ? LIMIT 1",
-          [rental.ApartmentID]
+          "SELECT image_url FROM ApartmentImages WHERE apartment_id = ? LIMIT 1",
+          [rental.apartment_id]
         );
 
-    return {
+        return {
           ...rental,
-          Img: image ? image.ImageURL : null,
+          Img: image ? image.image_url : null,
         };
       })
     );
@@ -80,10 +78,9 @@ app.get('/rentals', async (req, res) => {
   }
 });
 
+const bcrypt = require("bcrypt");
 
-const bcrypt = require('bcrypt');
-
-app.post('/signup', async (req, res) => {
+app.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -91,33 +88,32 @@ app.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await db.run(
-      "INSERT INTO SignUp (Username, Email, Password) VALUES (?, ?, ?)",
+      "INSERT INTO Users (username, email, password_hash) VALUES (?, ?, ?)",
       [name, email, hashedPassword]
     );
 
-    res.json({ message: "User registered successfully!", userId: result.lastID });
+    res.json({
+      message: "User registered successfully!",
+      userId: result.lastID,
+    });
   } catch (err) {
     console.error("Signup error:", err);
     res.status(500).json({ message: "Error inserting into database" });
   }
 });
 
-
-app.post('/login', async (req, res) => {
+app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await db.get(
-      "SELECT * FROM SignUp WHERE Email = ?",
-      [email]
-    );
+    const user = await db.get("SELECT * FROM Users WHERE email = ?", [email]);
 
     if (!user) {
       return res.status(400).json({ message: "Invalid username" });
     }
 
     // Compare provided password with stored hashed password
-    const isMatch = await bcrypt.compare(password, user.Password);
+    const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid password" });
@@ -125,19 +121,19 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       {
-        id: user.id,
-        email: user.Email,
-        username: user.Username,
-        role: 'user',
+        id: user.user_id,
+        email: user.email,
+        username: user.username,
+        role: "user",
       },
       SECRET_KEY,
-      { expiresIn: '1h' } // expires in 1 hour
+      { expiresIn: "1h" } // expires in 1 hour
     );
 
-    res.cookie('userToken', token, {
+    res.cookie("userToken", token, {
       httpOnly: true,
       secure: false, // set to true in production with HTTPS
-      sameSite: 'lax',
+      sameSite: "lax",
       maxAge: 60 * 60 * 1000, // 1 hour
     });
 
@@ -146,19 +142,18 @@ app.post('/login', async (req, res) => {
       message: "Login successful",
       user: {
         id: user.id,
-        username: user.Username, 
-        email: user.Email }
-        
+        username: user.username,
+        email: user.email,
+      },
     });
-    console.log("User logged in:", user.Email, user.Username, user.id);
-
+    console.log("User logged in:", user.email, user.username, user.user_id);
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-app.get('/verify', (req, res) => {
+app.get("/verify", (req, res) => {
   const token = req.cookies?.userToken;
   if (!token) {
     return res.status(401).json({ loggedIn: false });
@@ -168,32 +163,45 @@ app.get('/verify', (req, res) => {
     const decoded = jwt.verify(token, SECRET_KEY);
     res.json({
       loggedIn: true,
-      user: { id: decoded.id, email: decoded.email, username: decoded.username },
+      user: {
+        id: decoded.id,
+        email: decoded.email,
+        username: decoded.username,
+      },
     });
   } catch (err) {
     res.status(401).json({ loggedIn: false });
   }
 });
 
-app.post('/logout', (req, res) => {
-  res.clearCookie('userToken', {
+app.post("/logout", (req, res) => {
+  res.clearCookie("userToken", {
     httpOnly: true,
     secure: false,
-    sameSite: 'lax',
+    sameSite: "lax",
   });
-  res.json({ success: true, message: 'User logged out' });
+  res.json({ success: true, message: "User logged out" });
 });
 
-	app.get('/rentals/:id', async (req, res) => {
+app.get("/rentals/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const rental = await db.get("SELECT * FROM Listings WHERE ApartmentID = ?", [id]);
+    const rental = await db.get(
+      "SELECT * FROM Apartments WHERE apartment_id = ?",
+      [id]
+    );
 
     if (!rental) {
-      return res.status(404).json({ error: 'Rental not found' });
+      return res.status(404).json({ error: "Rental not found" });
     }
-    const images = await db.all("SELECT ImageURL FROM ApartmentImage WHERE ApartmentID = ?", [id]);
-    const descriptions = await db.all("SELECT Description FROM ApartmentImage WHERE ApartmentID = ?", [id]);
+    const images = await db.all(
+      "SELECT image_url FROM ApartmentImages WHERE apartment_id = ?",
+      [id]
+    );
+    const descriptions = await db.all(
+      "SELECT description FROM ApartmentImages WHERE apartment_id = ?",
+      [id]
+    );
     console.log("Images:", images); // 👈 log image rows
     console.log("Descriptions:", descriptions); // 👈 log description rows
 
@@ -201,7 +209,7 @@ app.post('/logout', (req, res) => {
     const rentalWithImages = {
       ...rental,
       Img: images || [],
-      Des: descriptions || []
+      Des: descriptions || [],
     };
 
     console.log("Final combined object:", rentalWithImages); // 👈 optional, for verification
@@ -212,70 +220,165 @@ app.post('/logout', (req, res) => {
   }
 });
 
-// ✅ Admin login route
-app.post('/admin/login', async (req, res) => {
+app.post("/admin/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const admin = await db.get('SELECT * FROM admin WHERE email = ?', [email]);
-    if (!admin) return res.status(400).json({ error: 'Invalid admin username' });
+    const admin = await db.get("SELECT * FROM Admins WHERE email = ?", [email]);
+    if (!admin)
+      return res.status(400).json({ error: "Invalid admin username" });
 
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) return res.status(400).json({ error: 'Invalid password' });
+    const isMatch = await bcrypt.compare(password, admin.password_hash);
+    if (!isMatch) return res.status(400).json({ error: "Invalid password" });
 
     const token = jwt.sign(
-      { id: admin.id, email: admin.email, role: 'admin' },
+      { id: admin.admin_id, email: admin.email, role: "admin" },
       SECRET_KEY,
-      { expiresIn: '1h' }
+      { expiresIn: "1h" }
     );
 
     // ✅ Set cookie
-    res.cookie('adminToken', token, {
-      httpOnly: true, 
-      secure: false, 
-      sameSite: 'lax',
+    res.cookie("adminToken", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
       maxAge: 60 * 60 * 1000,
     });
 
     res.json({
       success: true,
-      message: 'Admin login successful',
+      message: "Admin login successful",
       admin: { id: admin.id, email: admin.email },
     });
 
-    console.log('✅ Admin logged in:', admin.email);
+    console.log("✅ Admin logged in:", admin.email);
   } catch (error) {
-    console.error('Admin login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Admin login error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.post('/admin/logout', (req, res) => {
-  res.clearCookie('adminToken', {
+app.post("/admin/logout", (req, res) => {
+  res.clearCookie("adminToken", {
     httpOnly: true,
-    secure: false,   
-    sameSite: 'lax'
+    secure: false,
+    sameSite: "lax",
   });
-  res.json({ success: true, message: 'Admin logged out' });
+  res.json({ success: true, message: "Admin logged out" });
 });
 
-app.get('/admin/verify', verifyAdminStatus);
+app.get("/admin/verify", verifyAdminStatus);
 
-app.get('/admin/dashboard', verifyAdmin, async (req, res) => {
+app.get("/admin/dashboard", verifyAdmin, async (req, res) => {
   try {
-    const apartments = await db.get('SELECT COUNT(*) AS count FROM Listings');
-    const users = await db.get('SELECT COUNT(*) AS count FROM SignUp');
-    console.log('Parsed admin dashboard response:', apartments, users)
+    const apartments = await db.all("SELECT * FROM Apartments");
+    const users = await db.all("SELECT * FROM Users");
+    const stats = await db.get(`
+      SELECT
+        SUM(CASE WHEN is_occupied = 1 THEN 1 ELSE 0 END) AS occupied,
+        SUM(CASE WHEN is_occupied = 0 THEN 1 ELSE 0 END) AS vacant
+      FROM Apartments;
+    `);
 
+    console.log(apartments);
+    console.log(users);
+    console.log(stats);
 
     res.json({
-      apartmentCount: apartments.count,
-      userCount: users.count,
+      apartmentCount: apartments.length,
+      userCount: users.length,
+      apartments: apartments,
+      users: users,
+      occupied: stats.occupied,
+      vacant: stats.vacant,
       adminEmail: req.admin.email,
     });
   } catch (error) {
-    console.error('Error fetching admin dashboard:', error);
-    res.status(500).json({ error: 'Failed to fetch dashboard data' });
+    console.error("Error fetching admin dashboard:", error);
+    res.status(500).json({ error: "Failed to fetch dashboard data" });
+  }
+});
+
+app.get("/admin/lease", verifyAdmin, async (req, res) => {
+  try {
+    const leases = await db.all(`
+      SELECT 
+        l.lease_id,
+        l.apartment_id,
+        l.user_id,
+        l.start_date,
+        l.end_date,
+        l.rent_amount,
+        l.status,
+        a.address,
+        u.email
+      FROM Leases l
+      JOIN Apartments a ON l.apartment_id = a.apartment_id
+      JOIN Users u ON l.user_id = u.user_id
+      ORDER BY l.start_date DESC;
+    `);
+
+    res.json({ leases });
+  } catch (err) {
+    console.error("Error fetching leases:", err);
+    res.status(500).json({ error: "Failed to fetch leases" });
+  }
+});
+
+app.post("/admin/lease", verifyAdmin, async (req, res) => {
+  const { apartment_id, user_id, start_date, end_date, rent_amount } = req.body;
+
+  if (!apartment_id || !user_id || !start_date || !end_date || !rent_amount) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  try {
+    // Create a new lease
+    await db.run(
+      `INSERT INTO Leases (apartment_id, user_id, start_date, end_date, rent_amount, status)
+       VALUES (?, ?, ?, ?, ?, 1)`,
+      [apartment_id, user_id, start_date, end_date, rent_amount]
+    );
+
+    // Mark the apartment as occupied
+    await db.run(
+      `UPDATE Apartments SET is_occupied = 1 WHERE apartment_id = ?`,
+      [apartment_id]
+    );
+
+    res.json({ message: "Lease created and apartment marked as occupied" });
+  } catch (err) {
+    console.error("Error creating lease:", err);
+    res.status(500).json({ error: "Failed to create lease" });
+  }
+});
+
+app.put("/admin/lease/:id/end", verifyAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Get apartment_id tied to the lease
+    const lease = await db.get(
+      "SELECT apartment_id FROM Leases WHERE lease_id = ?",
+      [id]
+    );
+    if (!lease) {
+      return res.status(404).json({ error: "Lease not found" });
+    }
+
+    // Mark lease as inactive
+    await db.run("UPDATE Leases SET status = 0 WHERE lease_id = ?", [id]);
+
+    // Mark apartment as vacant
+    await db.run(
+      "UPDATE Apartments SET is_occupied = 0 WHERE apartment_id = ?",
+      [lease.apartment_id]
+    );
+
+    res.json({ message: "Lease ended and apartment marked as vacant" });
+  } catch (err) {
+    console.error("Error ending lease:", err);
+    res.status(500).json({ error: "Failed to end lease" });
   }
 });
 
