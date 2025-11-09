@@ -382,4 +382,9 @@ app.put("/admin/lease/:id/end", verifyAdmin, async (req, res) => {
   }
 });
 
+app.get("/admin/payments", verifyAdmin, async (req, res) => {
+
+
+});
+
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));

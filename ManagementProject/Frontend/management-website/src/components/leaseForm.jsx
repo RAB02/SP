@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-export default function AddLeaseForm({ apartments = [], users = [] }) {
+export default function AddLeaseForm({ apartments = [], users = [], refreshData }) {
   const [leases, setLeases] = useState([]);
   const [form, setForm] = useState({
     apartment_id: "",
@@ -77,7 +77,18 @@ export default function AddLeaseForm({ apartments = [], users = [] }) {
     setMessage(data.message || data.error);
 
     // ✅ Re-fetch leases after adding one
-    if (res.ok) fetchLeases();
+    if (res.ok){
+      fetchLeases();
+      refreshData();
+    }
+
+    setForm({
+      apartment_id: "",
+      user_id: "",
+      start_date: "",
+      end_date: "",
+      rent_amount: "",
+    });
   };
   const handleEndLease = async (leaseId) => {
     if (!confirm("Are you sure you want to end this lease?")) return;
@@ -95,7 +106,8 @@ export default function AddLeaseForm({ apartments = [], users = [] }) {
       alert(data.message || data.error);
 
       // Refresh leases list
-      fetchLeases();
+      await fetchLeases();
+      await refreshData();
     } catch (err) {
       console.error("Error ending lease:", err);
       alert("Failed to end lease.");
