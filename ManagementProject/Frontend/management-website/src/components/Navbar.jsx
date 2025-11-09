@@ -132,7 +132,15 @@ export default function Navbar() {
                           href="/admin/lease"
                           className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                         >
-                          Leases and Payments
+                          Leases
+                        </a>
+                      </MenuItem>
+                      <MenuItem>
+                        <a
+                          href="/admin/payments"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
+                          Payments
                         </a>
                       </MenuItem>
                       <MenuItem>
