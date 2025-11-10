@@ -9,6 +9,7 @@ export default function AddLease() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   // Fetch apartments + users for the form
   const fetchDashboardData = async () => {
@@ -22,7 +23,7 @@ export default function AddLease() {
 
       const json = await res.json();
       setData(json);
-      console.log("Fetched dashboard data:", json);
+      console.log("Data:", data);
     } catch (err) {
       console.error("Error loading dashboard:", err);
       setError("Session expired or unauthorized");
@@ -34,9 +35,11 @@ export default function AddLease() {
 
   useEffect(() => {
     fetchDashboardData();
+    setMounted(true);
   }, [router]);
 
-  // Loading state
+  if (!mounted) return null;
+
   if (loading)
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -46,7 +49,6 @@ export default function AddLease() {
       </div>
     );
 
-  // Error state
   if (error)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-red-600">
@@ -60,7 +62,6 @@ export default function AddLease() {
       </div>
     );
 
-  // No data state
   if (!data)
     return (
       <div className="p-6 text-center text-gray-500">
@@ -68,17 +69,16 @@ export default function AddLease() {
       </div>
     );
 
-  // Page content
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Header */}
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        Lease and Payment Managment{" "}
+        Lease Managment
       </h1>
       <AddLeaseForm
         apartments={data.apartments || []}
         users={data.users || []}
         onLeaseAdded={fetchDashboardData}
+        refreshData={fetchDashboardData}
       />
     </div>
   );

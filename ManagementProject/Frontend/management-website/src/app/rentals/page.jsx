@@ -40,6 +40,7 @@ export default function Rentals() {
   const [petsAllowed, setPetsAllowed] = useState(false);
   const [rentals, setRentals] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   // Filter Handler
   const handleFilter = async (e) => {
@@ -138,16 +139,15 @@ export default function Rentals() {
     }
 
     fetchData();
+    setMounted(true);
   }, []);
 
   return (
     <>
-      {/* Error Message */}
       {errorMessage && (
         <div className="text-red-600 font-semibold mb-4">{errorMessage}</div>
       )}
 
-      {/* Filter Form */}
       <form
         onSubmit={handleFilter}
         className="background flex justify-center bg-gray-100 p-4 rounded-lg mb-6 space-y-2"
