@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
 //Frame Motion
+
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {
@@ -196,24 +197,15 @@ export default function Rentals() {
         </button>
       </form>
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
-        className="Card flex flex-center flex-col"
-      >
-        <div className="background container mx-auto flex justify-evenly flex-wrap">
-          {rentals.map((rental, i) => (
-            <motion.div
-              key={rental.apartment_id}
-              variants={cardVariants}
-              custom={i}
-            >
-              <RentalCard rental={rental} />
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-    </>
+      {/*Rental Cards Display */}
+<div className="Card flex flex-center flex-col">
+  <div className="background container mx-auto flex justify-evenly flex-wrap">
+    {rentals.map((rental) => (
+      <div key={rental.apartment_id}>
+        <RentalCard rental={rental} />
+      </div>
+    ))}
+  </div>
+</div>   </>
   );
 }
