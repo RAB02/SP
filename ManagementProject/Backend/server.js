@@ -136,12 +136,13 @@ app.post('/login', async (req, res) => {
     res.json({
       success: true,
       message: "Login successful",
-      user: { 
+      user: {
         id: user.id,
         username: user.Username, 
         email: user.Email }
         
     });
+    console.log("User logged in:", user.Email, user.Username, user.id);
 
   } catch (error) {
     console.error("Login error:", error);
