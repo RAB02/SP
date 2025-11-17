@@ -11,9 +11,7 @@ export default function Gallery() {
   return (
     <div>
       {}
-      <div
-        className="overflow-hidden flex flex-col items-center justify-center"
-      >
+      <div className="overflow-hidden flex flex-col items-center justify-center">
         <h2 className="text-3xl font-bold mb-6">Gallery</h2>
         <Carousel slides={slides} />
       </div>

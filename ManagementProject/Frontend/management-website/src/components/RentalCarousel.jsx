@@ -95,7 +95,7 @@ export function RentalCarousel({ images }) {
   }
 
   const slides = images.map((img, i) => ({
-    src: img.ImageURL,
+    src: img.image_url,
   }));
 
   const handlePreviousClick = () => {
@@ -106,51 +106,53 @@ export function RentalCarousel({ images }) {
     setCurrent((prev) => (prev + 1) % slides.length);
   };
 
-    return (
-        <div className="relative w-full h-[45vh] sm:h-[55vh] md:h-[60vh] overflow-hidden rounded-xl shadow-md border border-gray-200 bg-gray-100">
-            {/* Slides */}
-            <ul className="relative w-full h-full">
-            {slides.map((slide, index) => (
-                <Slide
-                key={index}
-                slide={slide}
-                index={index}
-                current={current}
-                handleSlideClick={setCurrent}
-                />
-            ))}
-            </ul>
+  return (
+    <div className="relative w-full h-[45vh] sm:h-[55vh] md:h-[60vh] overflow-hidden rounded-xl shadow-md border border-gray-200 bg-gray-100">
+      {/* Slides */}
+      <ul className="relative w-full h-full">
+        {slides.map((slide, index) => (
+          <Slide
+            key={index}
+            slide={slide}
+            index={index}
+            current={current}
+            handleSlideClick={setCurrent}
+          />
+        ))}
+      </ul>
 
-            {/* Navigation buttons */}
-            <div className="absolute inset-0 flex justify-between items-center px-4">
-            <button
-                onClick={handlePreviousClick}
-                className="text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm p-2 sm:p-3 rounded-full transition"
-                aria-label="Previous Slide"
-            >
-                ❮
-            </button>
-            <button
-                onClick={handleNextClick}
-                className="text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm p-2 sm:p-3 rounded-full transition"
-                aria-label="Next Slide"
-            >
-                ❯
-            </button>
-            </div>
+      {/* Navigation buttons */}
+      <div className="absolute inset-0 flex justify-between items-center px-4">
+        <button
+          onClick={handlePreviousClick}
+          className="text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm p-2 sm:p-3 rounded-full transition"
+          aria-label="Previous Slide"
+        >
+          ❮
+        </button>
+        <button
+          onClick={handleNextClick}
+          className="text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm p-2 sm:p-3 rounded-full transition"
+          aria-label="Next Slide"
+        >
+          ❯
+        </button>
+      </div>
 
-            {/* Slide indicator dots */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-            {slides.map((_, i) => (
-                <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
-                    current === i ? "bg-white scale-110" : "bg-white/50 hover:bg-white/80"
-                }`}
-                />
-            ))}
-            </div>
-        </div>
-    );
+      {/* Slide indicator dots */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+        {slides.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            className={`w-2.5 h-2.5 rounded-full transition-all ${
+              current === i
+                ? "bg-white scale-110"
+                : "bg-white/50 hover:bg-white/80"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }

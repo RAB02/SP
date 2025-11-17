@@ -1,24 +1,25 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useContext } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { UserContext } from '@/components/UserContext';
+import React, { useState, useEffect, useContext } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { UserContext } from "@/components/UserContext";
 
 export default function InputSide() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [message, setMessage] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
   const [buttonLoading, setButtonLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const {user} = useContext(UserContext);
-  const rental = searchParams.get('rental'); 
+  const { user } = useContext(UserContext);
+  const rental = searchParams.get("rental");
 
-  
   useEffect(() => {
     if (rental) {
-      setMessage(`Hi, I'm interested in the ${rental} apartment. Can you provide more details?`);
+      setMessage(
+        `Hi, I'm interested in the ${rental} apartment. Can you provide more details?`
+      );
     }
 
     if (user) {
@@ -26,25 +27,24 @@ export default function InputSide() {
       setEmail(user.email || "");
     }
     console.log("User", user);
-    
   }, [rental, user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setButtonLoading(true);
 
-    const response = await fetch('https://formspree.io/f/movnoylw', {
-      method: 'POST',
+    const response = await fetch("https://formspree.io/f/movnoylw", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ name, email, phone, message }),
     });
 
     if (response.ok) {
-      router.push('/success');
+      router.push("/success");
     } else {
-      alert('Failed to submit form');
+      alert("Failed to submit form");
     }
 
     setButtonLoading(false);
@@ -101,7 +101,9 @@ export default function InputSide() {
 
       <div className="absolute bottom-5 right-5">
         {buttonLoading ? (
-          <button className="px-6 py-3 bg-blue-900 text-white rounded-lg">Loading...</button>
+          <button className="px-6 py-3 bg-blue-900 text-white rounded-lg">
+            Loading...
+          </button>
         ) : (
           <input
             type="submit"
