@@ -274,7 +274,7 @@ export default function Navbar() {
                       <div className="py-1">
                         <MenuItem>
                           <a
-                            href="/profile"
+                            href="/tenants/profile"
                             className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                           >
                             Profile
