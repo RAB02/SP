@@ -387,4 +387,99 @@ app.get("/admin/payments", verifyAdmin, async (req, res) => {
 
 });
 
+// Initialize MaintenanceRequests table if it doesn't exist
+(async () => {
+  try {
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS MaintenanceRequests (
+        request_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        selected_issues TEXT NOT NULL,
+        additional_details TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES Users(user_id)
+      )
+    `);
+    console.log("MaintenanceRequests table ready");
+  } catch (err) {
+    console.error("Error creating MaintenanceRequests table:", err);
+  }
+})();
+
+// Middleware to verify user token
+const verifyUser = (req, res, next) => {
+  const token = req.cookies?.userToken;
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized - Please log in" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: "Invalid token" });
+  }
+};
+
+// POST endpoint for maintenance requests
+app.post("/maintenance/request", verifyUser, async (req, res) => {
+  try {
+    const { selectedIssues, additionalDetails } = req.body;
+    const userId = req.user.id;
+
+    if (!selectedIssues || selectedIssues.length === 0) {
+      return res.status(400).json({ 
+        error: "Please select at least one maintenance issue" 
+      });
+    }
+
+    // Convert array to JSON string for storage
+    const issuesJson = JSON.stringify(selectedIssues);
+
+    const result = await db.run(
+      `INSERT INTO MaintenanceRequests (user_id, selected_issues, additional_details, status)
+       VALUES (?, ?, ?, 'pending')`,
+      [userId, issuesJson, additionalDetails || ""]
+    );
+
+    res.json({
+      success: true,
+      message: "Maintenance request submitted successfully",
+      requestId: result.lastID,
+    });
+
+    console.log(`Maintenance request created: ID ${result.lastID} by user ${userId}`);
+  } catch (error) {
+    console.error("Error creating maintenance request:", error);
+    res.status(500).json({ error: "Failed to submit maintenance request" });
+  }
+});
+
+// GET endpoint to retrieve user's maintenance requests
+app.get("/maintenance/requests", verifyUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const requests = await db.all(
+      `SELECT request_id, selected_issues, additional_details, status, created_at
+       FROM MaintenanceRequests
+       WHERE user_id = ?
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    // Parse JSON strings back to arrays
+    const parsedRequests = requests.map((req) => ({
+      ...req,
+      selected_issues: JSON.parse(req.selected_issues),
+    }));
+
+    res.json({ requests: parsedRequests });
+  } catch (error) {
+    console.error("Error fetching maintenance requests:", error);
+    res.status(500).json({ error: "Failed to fetch maintenance requests" });
+  }
+});
+
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
