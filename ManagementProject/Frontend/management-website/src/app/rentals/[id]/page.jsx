@@ -162,6 +162,48 @@ export default function RentalDetails() {
             lng: Number(data.lon),
           });
         }
+
+        // Save to recently viewed
+        try {
+          const recentlyViewed = JSON.parse(
+            localStorage.getItem("recentlyViewedRentals") || "[]"
+          );
+          
+          // Extract first image URL
+          let imageUrl = null;
+          if (data.Img && Array.isArray(data.Img) && data.Img.length > 0) {
+            // If Img is array of objects with ImageURL
+            imageUrl = data.Img[0]?.ImageURL || data.Img[0];
+          } else if (data.Img) {
+            // If Img is a single string
+            imageUrl = data.Img;
+          }
+          
+          // Map rental data to match RecentlyViewed component expectations
+          const rentalToSave = {
+            id: data.ApartmentID || data.apartment_id || id,
+            Apartment: data.Apartment || data.apartment_name || "Apartment",
+            Bed: data.Bed || data.bed || "N/A",
+            Bath: data.Bath || data.bath || "N/A",
+            Pricing: data.Pricing || data.pricing || "N/A",
+            Image: imageUrl || "https://via.placeholder.com/64?text=No+Image", // Save image URL for thumbnail
+          };
+
+          // Remove if already exists (to avoid duplicates)
+          const filtered = recentlyViewed.filter(
+            (item) => item.id !== rentalToSave.id
+          );
+          
+          // Add to the beginning
+          const updated = [rentalToSave, ...filtered].slice(0, 10); // Keep only last 10
+          
+          localStorage.setItem("recentlyViewedRentals", JSON.stringify(updated));
+          
+          // Dispatch custom event to update RecentlyViewed component
+          window.dispatchEvent(new Event("recentlyViewedUpdated"));
+        } catch (storageErr) {
+          console.error("Error saving to recently viewed:", storageErr);
+        }
       } catch (err) {
         console.error(err);
         setError(true);

@@ -19,9 +19,12 @@ export default function RentalCard({ rental }) {
       <div className="RentalImage relative bg-black w-72 h-56 overflow-hidden rounded shadow-xl pl-1 pr-1">
         <Link href={`/rentals/${rental.apartment_id}`}>
           <img
-            src={rental.Img || "/default.jpg"}
+            src={rental.Img || "https://via.placeholder.com/288x224?text=No+Image"}
             alt={`${rental.apartment_name} image`}
             className="w-full h-full object-cover object-center cursor-pointer transition-transform duration-300 hover:scale-105"
+            onError={(e) => {
+              e.target.src = "https://via.placeholder.com/288x224?text=No+Image";
+            }}
           />
         </Link>
         <h1 className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-xs font-semibold p-2 rounded">
