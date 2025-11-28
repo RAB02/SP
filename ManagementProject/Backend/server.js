@@ -29,11 +29,7 @@ app.use(
 );
 app.use(cookieParser());
 
-<<<<<<< HEAD
-app.get('/rentals', async (req, res) => {
-=======
 app.get("/rentals", async (req, res) => {
->>>>>>> a9064979aff738bc555ede14dec460aaef6219a9
   const { minPrice, maxPrice, minBeds, minBaths } = req.query;
 
   let query = "SELECT * FROM Apartments WHERE 1=1 AND is_occupied = 0";

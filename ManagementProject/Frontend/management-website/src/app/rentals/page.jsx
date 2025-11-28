@@ -86,13 +86,8 @@ export default function Rentals() {
     try {
       const response = await fetch(`http://localhost:8080/rentals?${query}`);
       const data = await response.json();
-<<<<<<< HEAD
-      setRentals(data );
-      setErrorMessage('');
-=======
       setRentals(data || []);
       setErrorMessage("");
->>>>>>> a9064979aff738bc555ede14dec460aaef6219a9
     } catch (error) {
       setErrorMessage("Failed to fetch rentals.");
       console.error("Error fetching filtered rentals:", error);
@@ -119,29 +114,10 @@ export default function Rentals() {
   };
 
   useEffect(() => {
-<<<<<<< HEAD
-  const storedUser = localStorage.getItem("user");
-  console.log("Loaded user:",storedUser)
-  if (storedUser) {
-    setUser(JSON.parse(storedUser));
-  }
-}, []);
-  
-  useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/rentals');
-      const rentals_data = await response.json();
-      setRentals(rentals_data);
-      console.log(rentals_data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-=======
     const storedUser = localStorage.getItem("user");
     console.log("Loaded user:", storedUser);
     if (storedUser) {
       setUser(JSON.parse(storedUser));
->>>>>>> a9064979aff738bc555ede14dec460aaef6219a9
     }
   }, []);
 
@@ -222,30 +198,6 @@ export default function Rentals() {
       </form>
 
       {/*Rental Cards Display */}
-<<<<<<< HEAD
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
-        className="Card flex flex-center flex-col"
-      >
-        <div className="background container mx-auto flex justify-evenly flex-wrap">
-          {Array.isArray(rentals) && rentals.length > 0 ? (
-            rentals.map((rental, i) => (
-            <motion.div key={rental.ApartmentID} variants={cardVariants} custom={i}>
-            <RentalCard rental={rental} user={user} />
-            </motion.div>
-            ))
-            ):(
-            <div className="text-gray-500 text-center w-full py-8">
-              No rentals available at the moment.
-            </div>
-          )}
-
-        </div>
-      </motion.div>
-    </>
-=======
 <div className="Card flex flex-center flex-col">
   <div className="background container mx-auto flex justify-evenly flex-wrap">
     {rentals.map((rental) => (
@@ -255,6 +207,5 @@ export default function Rentals() {
     ))}
   </div>
 </div>   </>
->>>>>>> a9064979aff738bc555ede14dec460aaef6219a9
   );
 }
