@@ -54,7 +54,7 @@ export default function RecentlyViewed() {
             {/* Thumbnail Image */}
             <Link href={`/rentals/${item.id}`} className="flex-shrink-0">
               <img
-                src={item.Image || "https://via.placeholder.com/64?text=No+Image"}
+                src={item.img || "https://via.placeholder.com/64?text=No+Image"}
                 alt={item.Apartment || "Apartment"}
                 className="w-16 h-16 rounded object-cover border border-gray-200 hover:opacity-80 transition-opacity"
                 onError={(e) => {

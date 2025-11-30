@@ -482,4 +482,41 @@ app.get("/maintenance/requests", verifyUser, async (req, res) => {
   }
 });
 
+app.get("/tenants/profile", verifyUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log("Fetching leases for user ID:", userId);
+
+    const result = await db.all(
+      `
+      SELECT
+        a.apartment_id AS id,
+        a.apartment_name AS apartment,
+        a.bed AS bed,
+        a.bath AS bath,
+        a.pricing AS pricing,
+        (
+          SELECT image_url
+          FROM ApartmentImages
+          WHERE apartment_id = a.apartment_id
+          LIMIT 1
+        ) AS img,
+        l.start_date,
+        l.end_date,
+        l.status
+      FROM Leases l
+      JOIN Apartments a ON l.apartment_id = a.apartment_id
+      WHERE l.user_id = ?
+        AND l.status = 1
+      `,
+      [userId]
+    );
+
+    res.json({ leases: result });
+  } catch (err) {
+    console.error("Lease fetch error:", err);
+    res.status(500).json({ error: "Could not load leases" });
+  }
+});
+
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
