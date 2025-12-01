@@ -383,8 +383,119 @@ app.put("/admin/lease/:id/end", verifyAdmin, async (req, res) => {
 });
 
 app.get("/admin/payments", verifyAdmin, async (req, res) => {
+  try {
+    // 1) Active leases (for the form)
+    const leases = await db.all(`
+      SELECT 
+        l.lease_id,
+        l.apartment_id,
+        l.user_id,
+        l.start_date,
+        l.end_date,
+        l.rent_amount,
+        l.status,
+        a.address,
+        u.email
+      FROM Leases l
+      JOIN Apartments a ON l.apartment_id = a.apartment_id
+      JOIN Users u ON l.user_id = u.user_id
+      WHERE l.status = 1
+      ORDER BY l.start_date DESC;
+    `);
 
+    // 2) Payments joined with lease/user/apartment (for Recent Payments)
+    const paymentRows = await db.all(`
+      SELECT
+        p.payment_id,
+        p.amount,
+        p.payment_date,
+        p.method,
+        p.status,
+        l.lease_id,
+        u.email,
+        a.address
+      FROM Payments p
+      JOIN Leases l ON p.lease_id = l.lease_id
+      JOIN Users u ON l.user_id = u.user_id
+      JOIN Apartments a ON l.apartment_id = a.apartment_id
+      -- optional: only show payments for active leases
+      WHERE l.status = 1
+      ORDER BY p.payment_date DESC, p.payment_id DESC;
+    `);
 
+    const payments = paymentRows.map((row) => ({
+      id: row.payment_id,
+      tenantName: row.email,
+      apartment: row.address,
+      leaseLabel: `Lease #${row.lease_id} – ${row.address}`,
+      amount: row.amount,
+      method: row.method,
+      status: row.status,
+      date: row.payment_date,
+    }));
+
+    // 🔑 Frontend expects BOTH leases + payments here
+    res.json({ leases, payments });
+  } catch (err) {
+    console.error("Error fetching payments data:", err);
+    res.status(500).json({ error: "Failed to fetch payments data" });
+  }
+});
+
+app.post("/admin/payments", verifyAdmin, async (req, res) => {
+  const { lease_id, amount, payment_date, method, status } = req.body;
+  if (!lease_id || !amount || !payment_date || !method || !status) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  try {
+    const result = await db.run(
+      `INSERT INTO Payments (lease_id, amount, payment_date, method, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      [lease_id, amount, payment_date, method, status]
+    );
+
+    const paymentId = result.lastID;
+
+    const row = await db.get(
+      `
+      SELECT
+        p.payment_id,
+        p.amount,
+        p.payment_date,
+        p.method,
+        p.status,
+        l.lease_id,
+        u.email,
+        a.address
+      FROM Payments p
+      JOIN Leases l ON p.lease_id = l.lease_id
+      JOIN Users u ON l.user_id = u.user_id
+      JOIN Apartments a ON l.apartment_id = a.apartment_id
+      WHERE p.payment_id = ?;
+      `,
+      [paymentId]
+    );
+
+    const payment = {
+      id: row.payment_id,
+      tenantName: row.email,
+      apartment: row.address,
+      leaseLabel: `Lease #${row.lease_id} – ${row.address}`,
+      amount: row.amount,
+      method: row.method,
+      status: row.status,
+      date: row.payment_date,
+    };
+
+    res.status(201).json({
+      message: "Payment created successfully",
+      payment,
+    });
+  } catch (err) {
+    console.error("Error creating payment:", err);
+    res.status(500).json({ error: "Failed to create payment" });
+  }
 });
 
 // Initialize MaintenanceRequests table if it doesn't exist
