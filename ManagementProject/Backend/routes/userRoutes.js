@@ -307,4 +307,123 @@ router.get("/tenants/profile", verifyUser, async (req, res) => {
   }
 });
 
+router.get("/tenants/payments/:lease_id", verifyUser, async (req, res) => {
+  const db = req.app.locals.db;
+  const { lease_id } = req.params;
+
+  try {
+    // adjust this line to match whatever verifyUser sets
+    const user_id = req.user.id ?? req.user.user_id;
+
+    if (!user_id) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    const row = await db.get(
+      `
+      SELECT
+        l.lease_id,
+        l.rent_amount,
+        l.start_date,
+        l.end_date,
+        l.status,
+        a.apartment_id AS apartment_id,
+        a.apartment_name AS apartment,
+        a.address,
+        a.bed AS bed,
+        a.bath AS bath,
+        a.pricing AS pricing,
+        u.username,
+        u.email
+      FROM Leases l
+      JOIN Apartments a ON l.apartment_id = a.apartment_id
+      JOIN Users u ON l.user_id = u.user_id
+      WHERE l.apartment_id = ?
+        AND l.user_id = ?
+      `,
+      [lease_id, user_id]
+    );
+
+    if (!row) {
+      return res
+        .status(404)
+        .json({ error: "Lease not found for this user" });
+    }
+
+    res.json({
+      lease_id: row.lease_id,
+      rent_amount: row.rent_amount,
+      apartment_id: row.apartment_id,
+      apartment: row.apartment,
+      address: row.address,
+      pricing: row.pricing,
+      name: row.username,
+      email: row.email,
+    });
+  } catch (err) {
+    console.error("Error fetching lease payment info:", err);
+    res.status(500).json({ error: "Failed to fetch lease payment info" });
+  }
+});
+
+router.post("/tenants/payments", verifyUser, async (req, res) => {
+  const db = req.app.locals.db;
+  const { lease_id, amount, payment_date, method, status } = req.body;
+
+  if (!lease_id || !amount || !payment_date || !method || !status) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  try {
+    const result = await db.run(
+      `INSERT INTO Payments (lease_id, amount, payment_date, method, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      [lease_id, amount, payment_date, method, status]
+    );
+
+    const paymentId = result.lastID;
+
+    const row = await db.get(
+      `
+      SELECT
+        p.payment_id,
+        p.amount,
+        p.payment_date,
+        p.method,
+        p.status,
+        l.lease_id,
+        u.username,
+        u.email,
+        a.address
+      FROM Payments p
+      JOIN Leases l ON p.lease_id = l.lease_id
+      JOIN Users u ON l.user_id = u.user_id
+      JOIN Apartments a ON l.apartment_id = a.apartment_id
+      WHERE p.payment_id = ?;
+      `,
+      [paymentId]
+    );
+
+    const payment = {
+      id: row.payment_id,
+      name:row.username,
+      tenantName: row.email,
+      apartment: row.address,
+      leaseLabel: row.address,
+      amount: row.amount,
+      method: row.method,
+      status: row.status,
+      date: row.payment_date,
+    };
+
+    res.status(201).json({
+      message: "Payment created successfully",
+      payment,
+    });
+  } catch (err) {
+    console.error("Error creating payment:", err);
+    res.status(500).json({ error: "Failed to create payment" });
+  }
+});
+
 module.exports = router;

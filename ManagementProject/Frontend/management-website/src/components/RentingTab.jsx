@@ -109,7 +109,7 @@ export default function RentingTab() {
 
             {/* View Button */}
             <Link
-              href={`/tentants/pay`}
+              href={`/tenants/payments/${item.id}`}
               className="text-sm text-blue-600 hover:underline flex-shrink-0"
             >
               Pay Rent
