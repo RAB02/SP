@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useContext } from "react";
+import { useRouter } from "next/navigation";
 import { UserContext } from "@/components/UserContext";
 
 export default function MaintenanceRequest() {
-  const { user } = useContext(UserContext);
+  const { user, setUser } = useContext(UserContext);
+  const router = useRouter();
   const [selectedIssues, setSelectedIssues] = useState([]);
   const [additionalDetails, setAdditionalDetails] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -53,15 +55,37 @@ export default function MaintenanceRequest() {
         },
         credentials: "include", // Include cookies for authentication
         body: JSON.stringify({
-          selectedIssues,
-          additionalDetails,
-        }),
+            selectedIssues,
+            additionalDetails,
+          }),
       });
 
-      const data = await response.json();
+      // Parse response (whether success or error)
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        // If response isn't JSON, create a basic error object
+        data = {};
+      }
 
+      // Handle non-OK responses
       if (!response.ok) {
-        throw new Error(data.error || "Failed to submit maintenance request");
+        let errorMessage = data.error || "Failed to submit maintenance request";
+        
+        // Handle specific error cases
+        if (response.status === 401) {
+          errorMessage = "You are not logged in. Please log in and try again.";
+          // Clear user context and refresh auth status
+          setUser(null);
+          window.dispatchEvent(new Event("userChange"));
+        } else if (response.status === 400) {
+          errorMessage = data.error || "Invalid request. Please check your input and try again.";
+        } else if (!data.error) {
+          errorMessage = `Server error (${response.status}). Please try again later.`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       // Success
@@ -145,7 +169,15 @@ export default function MaintenanceRequest() {
               {/* Error Message */}
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-sm text-red-800">{error}</p>
+                  <p className="text-sm text-red-800 mb-2">{error}</p>
+                  {error.includes("not logged in") && (
+                    <a
+                      href="/tenants/login"
+                      className="text-sm text-indigo-600 hover:underline font-medium"
+                    >
+                      Go to Login →
+                    </a>
+                  )}
                 </div>
               )}
               {/* Common Issues Section */}

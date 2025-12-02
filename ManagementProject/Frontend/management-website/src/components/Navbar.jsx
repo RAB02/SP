@@ -16,21 +16,37 @@ export default function Navbar() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Check admin cookie
-        const adminRes = await fetch("http://localhost:8080/admin/verify", {
-          credentials: "include",
-        });
-        const adminData = await adminRes.json();
-        setAdmin(adminData.loggedIn || false);
+        // Check admin cookie (401 is expected if not admin, so we handle it gracefully)
+        try {
+          const adminRes = await fetch("http://localhost:8080/admin/verify", {
+            credentials: "include",
+          });
+          if (adminRes.ok) {
+            const adminData = await adminRes.json();
+            setAdmin(adminData.loggedIn || false);
+          } else {
+            setAdmin(false); // Not an admin, which is fine
+          }
+        } catch (adminErr) {
+          setAdmin(false); // Not an admin or error checking
+        }
 
         // Check user cookie
-        const userRes = await fetch("http://localhost:8080/verify", {
-          credentials: "include",
-        });
-        const userData = await userRes.json();
-        setUser(userData.loggedIn ? userData.user : null);
+        try {
+          const userRes = await fetch("http://localhost:8080/verify", {
+            credentials: "include",
+          });
+          if (userRes.ok) {
+            const userData = await userRes.json();
+            setUser(userData.loggedIn ? userData.user : null);
+          } else {
+            setUser(null); // Not logged in as user
+          }
+        } catch (userErr) {
+          setUser(null); // Error checking user status
+        }
       } catch (err) {
-        console.error("Error verifying session:", err);
+        // Fallback: clear both if there's a network error
         setAdmin(false);
         setUser(null);
       }
