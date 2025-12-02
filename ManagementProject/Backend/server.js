@@ -36,6 +36,35 @@ async function initializeDatabase() {
   } catch (err) {
     console.error("Error creating MaintenanceRequests table:", err);
   }
+
+  // Initialize RentalApplications table if it doesn't exist
+  try {
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS RentalApplications (
+        application_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT,
+        date_of_birth DATE,
+        ssn TEXT,
+        employer TEXT,
+        job_title TEXT,
+        monthly_income DECIMAL(10,2),
+        employment_length TEXT,
+        current_address TEXT,
+        rent_amount DECIMAL(10,2),
+        landlord_name TEXT,
+        landlord_phone TEXT,
+        consent_to_background_check BOOLEAN DEFAULT 0,
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log("RentalApplications table ready");
+  } catch (err) {
+    console.error("Error creating RentalApplications table:", err);
+  }
 }
 app = express();
 app.use(express.static(path.join(__dirname, "static")));
@@ -626,6 +655,73 @@ app.get("/tenants/profile", verifyUser, async (req, res) => {
   } catch (err) {
     console.error("Lease fetch error:", err);
     res.status(500).json({ error: "Could not load leases" });
+  }
+});
+
+// POST endpoint for rental applications
+app.post("/apply", async (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      dob,
+      ssn,
+      employer,
+      jobTitle,
+      monthlyIncome,
+      employmentLength,
+      currentAddress,
+      rentAmount,
+      landlordName,
+      landlordPhone,
+      consent,
+    } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !phone) {
+      return res.status(400).json({
+        error: "Missing required fields: first name, last name, email, and phone are required",
+      });
+    }
+
+    const result = await db.run(
+      `INSERT INTO RentalApplications (
+        first_name, last_name, email, phone, date_of_birth, ssn,
+        employer, job_title, monthly_income, employment_length,
+        current_address, rent_amount, landlord_name, landlord_phone,
+        consent_to_background_check, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [
+        firstName,
+        lastName,
+        email,
+        phone,
+        dob || null,
+        ssn || null,
+        employer || null,
+        jobTitle || null,
+        monthlyIncome || null,
+        employmentLength || null,
+        currentAddress || null,
+        rentAmount || null,
+        landlordName || null,
+        landlordPhone || null,
+        consent ? 1 : 0,
+      ]
+    );
+
+    res.json({
+      success: true,
+      message: "Application submitted successfully",
+      applicationId: result.lastID,
+    });
+
+    console.log(`Rental application created: ID ${result.lastID} for ${email}`);
+  } catch (error) {
+    console.error("Error creating rental application:", error);
+    res.status(500).json({ error: "Failed to submit application" });
   }
 });
 

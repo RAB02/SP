@@ -1,6 +1,110 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 
 const ApplyForm = () => {
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    dob: "",
+    ssn: "",
+    employer: "",
+    jobTitle: "",
+    monthlyIncome: "",
+    employmentLength: "",
+    currentAddress: "",
+    rentAmount: "",
+    landlordName: "",
+    landlordPhone: "",
+    consent: false,
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState({ type: "", text: "" });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitMessage({ type: "", text: "" });
+
+    try {
+      const response = await fetch("http://localhost:8080/apply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          dob: formData.dob || null,
+          ssn: formData.ssn || null,
+          employer: formData.employer || null,
+          jobTitle: formData.jobTitle || null,
+          monthlyIncome: formData.monthlyIncome ? parseFloat(formData.monthlyIncome) : null,
+          employmentLength: formData.employmentLength || null,
+          currentAddress: formData.currentAddress || null,
+          rentAmount: formData.rentAmount ? parseFloat(formData.rentAmount) : null,
+          landlordName: formData.landlordName || null,
+          landlordPhone: formData.landlordPhone || null,
+          consent: formData.consent,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitMessage({
+          type: "success",
+          text: "Application submitted successfully! We will review your application and get back to you soon.",
+        });
+        // Reset form
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          dob: "",
+          ssn: "",
+          employer: "",
+          jobTitle: "",
+          monthlyIncome: "",
+          employmentLength: "",
+          currentAddress: "",
+          rentAmount: "",
+          landlordName: "",
+          landlordPhone: "",
+          consent: false,
+        });
+      } else {
+        setSubmitMessage({
+          type: "error",
+          text: data.error || "Failed to submit application. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      setSubmitMessage({
+        type: "error",
+        text: "An error occurred while submitting your application. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-100">
       <div className="max-w-3xl w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
@@ -12,9 +116,18 @@ const ApplyForm = () => {
             Please fill out the form below to apply for an apartment.
           </p>
         </div>
-        <form className="mt-8 space-y-6" action="#" method="POST">
-          {" "}
-          {/* Replace action with your backend endpoint */}
+        {submitMessage.text && (
+          <div
+            className={`p-4 rounded-md ${
+              submitMessage.type === "success"
+                ? "bg-green-50 text-green-800 border border-green-200"
+                : "bg-red-50 text-red-800 border border-red-200"
+            }`}
+          >
+            {submitMessage.text}
+          </div>
+        )}
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {/* Personal Information Section */}
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-medium text-gray-900">
@@ -30,9 +143,12 @@ const ApplyForm = () => {
                 </label>
                 <input
                   type="text"
-                  name="first-name"
+                  name="firstName"
                   id="first-name"
                   autoComplete="given-name"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -45,9 +161,12 @@ const ApplyForm = () => {
                 </label>
                 <input
                   type="text"
-                  name="last-name"
+                  name="lastName"
                   id="last-name"
                   autoComplete="family-name"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -63,6 +182,9 @@ const ApplyForm = () => {
                   name="email"
                   id="email"
                   autoComplete="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -78,6 +200,9 @@ const ApplyForm = () => {
                   name="phone"
                   id="phone"
                   autoComplete="tel"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -92,6 +217,8 @@ const ApplyForm = () => {
                   type="date"
                   name="dob"
                   id="dob"
+                  value={formData.dob}
+                  onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -106,6 +233,8 @@ const ApplyForm = () => {
                   type="text"
                   name="ssn"
                   id="ssn"
+                  value={formData.ssn}
+                  onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -128,6 +257,8 @@ const ApplyForm = () => {
                   type="text"
                   name="employer"
                   id="employer"
+                  value={formData.employer}
+                  onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -140,8 +271,10 @@ const ApplyForm = () => {
                 </label>
                 <input
                   type="text"
-                  name="job-title"
+                  name="jobTitle"
                   id="job-title"
+                  value={formData.jobTitle}
+                  onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -154,8 +287,10 @@ const ApplyForm = () => {
                 </label>
                 <input
                   type="number"
-                  name="monthly-income"
+                  name="monthlyIncome"
                   id="monthly-income"
+                  value={formData.monthlyIncome}
+                  onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -168,9 +303,11 @@ const ApplyForm = () => {
                 </label>
                 <input
                   type="text"
-                  name="employment-length"
+                  name="employmentLength"
                   id="employment-length"
                   placeholder="e.g., 2 years"
+                  value={formData.employmentLength}
+                  onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -191,8 +328,10 @@ const ApplyForm = () => {
                 </label>
                 <input
                   type="text"
-                  name="current-address"
+                  name="currentAddress"
                   id="current-address"
+                  value={formData.currentAddress}
+                  onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -205,8 +344,10 @@ const ApplyForm = () => {
                 </label>
                 <input
                   type="number"
-                  name="rent-amount"
+                  name="rentAmount"
                   id="rent-amount"
+                  value={formData.rentAmount}
+                  onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -219,8 +360,10 @@ const ApplyForm = () => {
                 </label>
                 <input
                   type="text"
-                  name="landlord-name"
+                  name="landlordName"
                   id="landlord-name"
+                  value={formData.landlordName}
+                  onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -233,8 +376,10 @@ const ApplyForm = () => {
                 </label>
                 <input
                   type="tel"
-                  name="landlord-phone"
+                  name="landlordPhone"
                   id="landlord-phone"
+                  value={formData.landlordPhone}
+                  onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
@@ -247,6 +392,8 @@ const ApplyForm = () => {
                 id="consent"
                 name="consent"
                 type="checkbox"
+                checked={formData.consent}
+                onChange={handleChange}
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
               <label
@@ -259,9 +406,10 @@ const ApplyForm = () => {
             <div className="mt-6">
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                disabled={isSubmitting}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit Application
+                {isSubmitting ? "Submitting..." : "Submit Application"}
               </button>
             </div>
           </div>
