@@ -426,4 +426,73 @@ router.post("/tenants/payments", verifyUser, async (req, res) => {
   }
 });
 
+// POST /apply
+router.post("/apply", async (req, res) => {
+  const db = req.app.locals.db;
+
+  try {
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      dob,
+      ssn,
+      employer,
+      jobTitle,
+      monthlyIncome,
+      employmentLength,
+      currentAddress,
+      rentAmount,
+      landlordName,
+      landlordPhone,
+      consent,
+    } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !phone) {
+      return res.status(400).json({
+        error: "Missing required fields: first name, last name, email, and phone are required",
+      });
+    }
+
+    const result = await db.run(
+      `INSERT INTO RentalApplications (
+        first_name, last_name, email, phone, date_of_birth, ssn,
+        employer, job_title, monthly_income, employment_length,
+        current_address, rent_amount, landlord_name, landlord_phone,
+        consent_to_background_check, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [
+        firstName,
+        lastName,
+        email,
+        phone,
+        dob || null,
+        ssn || null,
+        employer || null,
+        jobTitle || null,
+        monthlyIncome || null,
+        employmentLength || null,
+        currentAddress || null,
+        rentAmount || null,
+        landlordName || null,
+        landlordPhone || null,
+        consent ? 1 : 0,
+      ]
+    );
+
+    res.json({
+      success: true,
+      message: "Application submitted successfully",
+      applicationId: result.lastID,
+    });
+
+    console.log(`Rental application created: ID ${result.lastID} for ${email}`);
+  } catch (error) {
+    console.error("Error creating rental application:", error);
+    res.status(500).json({ error: "Failed to submit application" });
+  }
+});
+
 module.exports = router;
