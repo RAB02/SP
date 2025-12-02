@@ -272,7 +272,7 @@ router.post("/payments", verifyAdmin, async (req, res) => {
       id: row.payment_id,
       tenantName: row.email,
       apartment: row.address,
-      leaseLabel: `Lease #${row.lease_id} – ${row.address}`,
+      leaseLabel: row.address,
       amount: row.amount,
       method: row.method,
       status: row.status,
