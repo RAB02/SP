@@ -12,12 +12,31 @@ PORT = 8080;
 
 // connect to db
 let db;
-(async () => {
+
+async function initializeDatabase() {
   db = await open({
     filename: "./db/new_management.db",
     driver: sqlite3.Database,
   });
-})();
+  
+  // Initialize MaintenanceRequests table if it doesn't exist
+  try {
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS MaintenanceRequests (
+        request_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        selected_issues TEXT NOT NULL,
+        additional_details TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES Users(user_id)
+      )
+    `);
+    console.log("MaintenanceRequests table ready");
+  } catch (err) {
+    console.error("Error creating MaintenanceRequests table:", err);
+  }
+}
 app = express();
 app.use(express.static(path.join(__dirname, "static")));
 app.use(express.json());
@@ -498,26 +517,6 @@ app.post("/admin/payments", verifyAdmin, async (req, res) => {
   }
 });
 
-// Initialize MaintenanceRequests table if it doesn't exist
-(async () => {
-  try {
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS MaintenanceRequests (
-        request_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        selected_issues TEXT NOT NULL,
-        additional_details TEXT,
-        status TEXT DEFAULT 'pending',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES Users(user_id)
-      )
-    `);
-    console.log("MaintenanceRequests table ready");
-  } catch (err) {
-    console.error("Error creating MaintenanceRequests table:", err);
-  }
-})();
-
 // Middleware to verify user token
 const verifyUser = (req, res, next) => {
   const token = req.cookies?.userToken;
@@ -630,4 +629,12 @@ app.get("/tenants/profile", verifyUser, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+// Start server after database is initialized
+initializeDatabase()
+  .then(() => {
+    app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+  })
+  .catch((err) => {
+    console.error("Failed to initialize database:", err);
+    process.exit(1);
+  });
