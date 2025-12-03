@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Gallery from "@/components/Gallery";
+import Link from "next/link";
 
 export default function Home() {
   const [videoAvailable, setVideoAvailable] = useState(true);
@@ -97,32 +98,6 @@ export default function Home() {
       )}
 
       <div id="gallery" className="flex flex-row bg-gray-100 min-h-screen w-screen pt-20">
-        <div className="basis-1/3 flex flex-col items-center">
-          <h1 className="text-black text-3xl font-bold mb-4">New Listings</h1>
-          <div className="bg-slate-900 w-full h-full max-h-[90%] max-w-[80%] p-5 rounded-lg shadow-lg flex flex-col items-center justify-between">
-            {/* Up Arrow */}
-            <button onClick={prevListings} className="text-white text-2xl mb-2">▲</button>
-
-            {/* Listings */}
-            <ul className="text-white text-left flex flex-col gap-4">
-              {visibleListings.map((listing) => (
-                <li key={listing.apartment_id} className="flex flex-col">
-                  <img
-                    src={listing.Img || "/placeholder.jpg"}
-                    alt={listing.address}
-                    className="w-full h-32 object-cover rounded-md mb-2"
-                  />
-                  <div className="font-bold">{listing.address}</div>
-                  <div>{listing.bed} Beds • {listing.bath} Baths</div>
-                  <div>${listing.pricing}</div>
-                </li>
-              ))}
-            </ul>
-
-            {/* Down Arrow */}
-            <button onClick={nextListings} className="text-white text-2xl mt-2">▼</button>
-          </div>
-        </div>
 
         <div className="basis-2/3 flex flex-col items-center">
           <Gallery />
