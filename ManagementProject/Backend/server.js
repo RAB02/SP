@@ -23,72 +23,25 @@ app.use(cookieParser());
 
 app.use("/admin", adminRoutes);
 app.use("/", userRoutes);
+app.use(
+  "/uploads/apartments",
+  express.static(path.join(__dirname, "uploads", "apartments"))
+);
 
-// DB init
 let db;
 
-async function initializeDatabase() {
-  db = await open({
-    filename: "./db/new_management.db",
-    driver: sqlite3.Database,
-  });
-  
-  app.locals.db = db;
-
-  // Initialize MaintenanceRequests table if it doesn't exist
+(async () => {
   try {
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS MaintenanceRequests (
-        request_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        selected_issues TEXT NOT NULL,
-        additional_details TEXT,
-        status TEXT DEFAULT 'pending',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES Users(user_id)
-      )
-    `);
-    console.log("MaintenanceRequests table ready");
-  } catch (err) {
-    console.error("Error creating MaintenanceRequests table:", err);
-  }
+    db = await open({
+      filename: "./db/new_management.db",
+      driver: sqlite3.Database,
+    });
 
-  // Initialize RentalApplications table if it doesn't exist
-  try {
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS RentalApplications (
-        application_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        first_name TEXT NOT NULL,
-        last_name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        phone TEXT,
-        date_of_birth DATE,
-        ssn TEXT,
-        employer TEXT,
-        job_title TEXT,
-        monthly_income DECIMAL(10,2),
-        employment_length TEXT,
-        current_address TEXT,
-        rent_amount DECIMAL(10,2),
-        landlord_name TEXT,
-        landlord_phone TEXT,
-        consent_to_background_check BOOLEAN DEFAULT 0,
-        status TEXT DEFAULT 'pending',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    console.log("RentalApplications table ready");
-  } catch (err) {
-    console.error("Error creating RentalApplications table:", err);
-  }
-}
+    app.locals.db = db;
 
-// Start server after database is initialized
-initializeDatabase()
-  .then(() => {
-    app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
-  })
-  .catch((err) => {
-    console.error("Failed to initialize database:", err);
-    process.exit(1);
-  });
+  } catch (err) {
+    console.error("Error initializing database:", err);
+  }
+})();
+
+app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));

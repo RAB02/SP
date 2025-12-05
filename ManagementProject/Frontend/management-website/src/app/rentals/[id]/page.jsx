@@ -148,69 +148,92 @@ export default function RentalDetails() {
   const [position, setPosition] = useState({ lat: 26.3017, lng: -98.1633 });
 
   useEffect(() => {
-    if (!id) return;
-    const fetchRental = async () => {
-      try {
-        const response = await fetch(`http://localhost:8080/rentals/${id}`);
-        if (!response.ok) throw new Error("Rental not found");
-        const data = await response.json();
-        console.log(data);
-        setRental(data);
-        if (data.lat && data.lon) {
-          setPosition({
-            lat: Number(data.lat),
-            lng: Number(data.lon),
-          });
-        }
+  if (!id) return;
 
-        // Save to recently viewed
-        try {
-          const recentlyViewed = JSON.parse(
-            localStorage.getItem("recentlyViewedRentals") || "[]"
-          );
-          
-          // Extract first image URL
-          let imageUrl = null;
-          if (data.Img && Array.isArray(data.Img) && data.Img.length > 0) {
-            // If Img is array of objects with ImageURL
-            imageUrl = data.Img[0]?.ImageURL || data.Img[0];
-          } else if (data.Img) {
-            // If Img is a single string
-            imageUrl = data.Img;
-          }
-          
-          // Map rental data to match RecentlyViewed component expectations
-          const rentalToSave = {
-            id: data.ApartmentID || data.apartment_id || id,
-            Apartment: data.Apartment || data.apartment_name || "Apartment",
-            Bed: data.Bed || data.bed || "N/A",
-            Bath: data.Bath || data.bath || "N/A",
-            Pricing: data.Pricing || data.pricing || "N/A",
-            Image: imageUrl || "https://via.placeholder.com/64?text=No+Image", // Save image URL for thumbnail
-          };
+  const fetchRental = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/rentals/${id}`);
+      if (!response.ok) throw new Error("Rental not found");
+      const data = await response.json();
+      console.log(data);
+      setRental(data);
 
-          // Remove if already exists (to avoid duplicates)
-          const filtered = recentlyViewed.filter(
-            (item) => item.id !== rentalToSave.id
-          );
-          
-          // Add to the beginning
-          const updated = [rentalToSave, ...filtered].slice(0, 10); // Keep only last 10
-          
-          localStorage.setItem("recentlyViewedRentals", JSON.stringify(updated));
-          
-          // Dispatch custom event to update RecentlyViewed component
-          window.dispatchEvent(new Event("recentlyViewedUpdated"));
-        } catch (storageErr) {
-          console.error("Error saving to recently viewed:", storageErr);
-        }
-      } catch (err) {
-        console.error(err);
-        setError(true);
+      if (data.lat && data.lon) {
+        setPosition({
+          lat: Number(data.lat),
+          lng: Number(data.lon),
+        });
       }
-    };
-    fetchRental();
-  }, [id]);
+
+      // Save to recently viewed
+      try {
+        const recentlyViewed = JSON.parse(
+          localStorage.getItem("recentlyViewedRentals") || "[]"
+        );
+
+        // --- NORMALIZE IMAGE URL (your logic) ---
+        const normalizeImageUrl = (img) => {
+          if (!img) {
+            return "https://via.placeholder.com/288x224?text=No+Image";
+          }
+
+          if (img.startsWith("http")) {
+            return img;
+          }
+
+          const path = img.startsWith("/") ? img : `/${img}`;
+          return `http://localhost:8080${path}`;
+        };
+
+        // Extract first image from data.Img
+        let rawImage = null;
+
+        if (Array.isArray(data.Img) && data.Img.length > 0) {
+          rawImage = data.Img[0];
+        } else if (data.Img) {
+          // fallback if it's ever a single string
+          rawImage = data.Img;
+        }
+
+        // Apply your normalization logic
+        const imageUrl = normalizeImageUrl(rawImage);
+
+        // Save simplified rental object
+        const rentalToSave = {
+          id: data.ApartmentID || data.apartment_id || id,
+          Apartment: data.Apartment || data.apartment_name || "Apartment",
+          Bed: data.Bed || data.bed || "N/A",
+          Bath: data.Bath || data.bath || "N/A",
+          Pricing: data.Pricing || data.pricing || "N/A",
+          Image: imageUrl,
+        };
+
+        // Remove duplicates
+        const filtered = recentlyViewed.filter(
+          (item) => item.id !== rentalToSave.id
+        );
+
+        // Add to front and keep only 10
+        const updated = [rentalToSave, ...filtered].slice(0, 10);
+
+        localStorage.setItem(
+          "recentlyViewedRentals",
+          JSON.stringify(updated)
+        );
+
+        // Notify RecentlyViewed component
+        window.dispatchEvent(new Event("recentlyViewedUpdated"));
+      } catch (storageErr) {
+        console.error("Error saving to recently viewed:", storageErr);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(true);
+    }
+  };
+
+  fetchRental();
+}, [id]);
 
   if (!rental && !error)
     return <div className="bg-white h-screen w-screen"></div>;

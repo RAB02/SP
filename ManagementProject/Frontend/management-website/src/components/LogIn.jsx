@@ -72,9 +72,10 @@ export default function LogIn() {
       }
 
       if (result.success) {
-        // ✅ Let backend handle cookie
         setUser(result.user);
-        window.dispatchEvent(new Event("userChange")); // notify Navbar instantly
+        window.dispatchEvent(new Event("userChange"));
+        localStorage.removeItem("recentlyViewedRentals");
+
         router.push("/rentals");
       } else {
         setError(result.message || "Login failed.");

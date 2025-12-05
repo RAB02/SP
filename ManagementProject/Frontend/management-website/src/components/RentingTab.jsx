@@ -78,7 +78,7 @@ export default function RentingTab() {
         {items.slice(0, 6).map((item) => (
           <li key={item.id} className="flex items-center gap-3">
             {/* Image */}
-            <Link href={`/rentals/${item.id}`} className="flex-shrink-0">
+            <div className="flex-shrink-0">
               <img
                 src={
                   item.img?.trim()
@@ -92,16 +92,14 @@ export default function RentingTab() {
                     "https://via.placeholder.com/64?text=No+Image";
                 }}
               />
-            </Link>
+            </div>
 
             {/* Text info */}
             <div className="flex-1 min-w-0">
-              <Link
-                href={`/rentals/${item.id}`}
-                className="text-indigo-600 hover:underline font-medium block truncate"
-              >
+              <p className="text-gray-900 font-medium block truncate">
                 {item.apartment}
-              </Link>
+              </p>
+
               <div className="text-xs text-gray-600 mt-1">
                 {item.bed} bed • {item.bath} bath • ${item.pricing}
               </div>

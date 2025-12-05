@@ -57,6 +57,61 @@ router.get("/rentals", async (req, res) => {
   }
 });
 
+// GET /rentals/:id
+router.get("/rentals/:id", async (req, res) => {
+  const db = req.app.locals.db;
+
+  try {
+    const id = req.params.id;
+    const rental = await db.get(
+      "SELECT * FROM Apartments WHERE apartment_id = ?",
+      [id]
+    );
+
+    if (!rental) {
+      return res.status(404).json({ error: "Rental not found" });
+    }
+
+    const images = await db.all(
+      "SELECT image_url FROM ApartmentImages WHERE apartment_id = ?",
+      [id]
+    );
+
+    console.log("Images:", images);
+
+    // helper to normalize URLs
+    const normalizeImageUrl = (url) => {
+      if (!url) {
+        return "https://via.placeholder.com/288x224?text=No+Image";
+      }
+
+      // already full http/https url (like your Pexels ones)
+      if (url.startsWith("http")) {
+        return url;
+      }
+
+      // local path from uploads
+      const path = url.startsWith("/") ? url : `/${url}`;
+      return `http://localhost:8080${path}`;
+    };
+
+    // convert [{ image_url: "..." }] -> ["..."]
+    const imageUrls = images.map((row) => normalizeImageUrl(row.image_url));
+
+    const rentalWithImages = {
+      ...rental,
+      Img: imageUrls, // 👈 now an array of strings
+    };
+
+
+    console.log("Final combined object:", rentalWithImages);
+    res.json(rentalWithImages);
+  } catch (error) {
+    console.error("Error fetching rental details:", error);
+    res.status(500).json({ error: "Failed to fetch rental details" });
+  }
+});
+
 // POST /signup
 router.post("/signup", async (req, res) => {
   const db = req.app.locals.db;
@@ -164,46 +219,6 @@ router.post("/logout", (req, res) => {
   res.json({ success: true, message: "User logged out" });
 });
 
-// GET /rentals/:id
-router.get("/rentals/:id", async (req, res) => {
-  const db = req.app.locals.db;
-
-  try {
-    const id = req.params.id;
-    const rental = await db.get(
-      "SELECT * FROM Apartments WHERE apartment_id = ?",
-      [id]
-    );
-
-    if (!rental) {
-      return res.status(404).json({ error: "Rental not found" });
-    }
-
-    const images = await db.all(
-      "SELECT image_url FROM ApartmentImages WHERE apartment_id = ?",
-      [id]
-    );
-    const descriptions = await db.all(
-      "SELECT description FROM ApartmentImages WHERE apartment_id = ?",
-      [id]
-    );
-    console.log("Images:", images);
-    console.log("Descriptions:", descriptions);
-
-    const rentalWithImages = {
-      ...rental,
-      Img: images || [],
-      Des: descriptions || [],
-    };
-
-    console.log("Final combined object:", rentalWithImages);
-    res.json(rentalWithImages);
-  } catch (error) {
-    console.error("Error fetching rental details:", error);
-    res.status(500).json({ error: "Failed to fetch rental details" });
-  }
-});
-
 // POST /maintenance/request
 router.post("/maintenance/request", verifyUser, async (req, res) => {
   const db = req.app.locals.db;
@@ -300,7 +315,24 @@ router.get("/tenants/profile", verifyUser, async (req, res) => {
       [userId]
     );
 
-    res.json({ leases: result });
+    // normalize images so frontend gets full URLs
+    const normalizeImageUrl = (url) => {
+      if (!url) return null;
+
+      // external URL (pexels, etc.)
+      if (url.startsWith("http")) return url;
+
+      // local file
+      const path = url.startsWith("/") ? url : `/${url}`;
+      return `http://localhost:8080${path}`;
+    };
+
+    const leases = result.map((row) => ({
+      ...row,
+      img: normalizeImageUrl(row.img),
+    }));
+
+    res.json({ leases });
   } catch (err) {
     console.error("Lease fetch error:", err);
     res.status(500).json({ error: "Could not load leases" });
@@ -423,75 +455,6 @@ router.post("/tenants/payments", verifyUser, async (req, res) => {
   } catch (err) {
     console.error("Error creating payment:", err);
     res.status(500).json({ error: "Failed to create payment" });
-  }
-});
-
-// POST /apply
-router.post("/apply", async (req, res) => {
-  const db = req.app.locals.db;
-
-  try {
-    const {
-      firstName,
-      lastName,
-      email,
-      phone,
-      dob,
-      ssn,
-      employer,
-      jobTitle,
-      monthlyIncome,
-      employmentLength,
-      currentAddress,
-      rentAmount,
-      landlordName,
-      landlordPhone,
-      consent,
-    } = req.body;
-
-    // Validate required fields
-    if (!firstName || !lastName || !email || !phone) {
-      return res.status(400).json({
-        error: "Missing required fields: first name, last name, email, and phone are required",
-      });
-    }
-
-    const result = await db.run(
-      `INSERT INTO RentalApplications (
-        first_name, last_name, email, phone, date_of_birth, ssn,
-        employer, job_title, monthly_income, employment_length,
-        current_address, rent_amount, landlord_name, landlord_phone,
-        consent_to_background_check, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [
-        firstName,
-        lastName,
-        email,
-        phone,
-        dob || null,
-        ssn || null,
-        employer || null,
-        jobTitle || null,
-        monthlyIncome || null,
-        employmentLength || null,
-        currentAddress || null,
-        rentAmount || null,
-        landlordName || null,
-        landlordPhone || null,
-        consent ? 1 : 0,
-      ]
-    );
-
-    res.json({
-      success: true,
-      message: "Application submitted successfully",
-      applicationId: result.lastID,
-    });
-
-    console.log(`Rental application created: ID ${result.lastID} for ${email}`);
-  } catch (error) {
-    console.error("Error creating rental application:", error);
-    res.status(500).json({ error: "Failed to submit application" });
   }
 });
 
