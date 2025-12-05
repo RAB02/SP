@@ -161,6 +161,14 @@ export default function Navbar() {
                       </MenuItem>
                       <MenuItem>
                         <a
+                          href="/admin/add-lease"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
+                          Add Lease
+                        </a>
+                      </MenuItem>
+                      <MenuItem>
+                        <a
                           onClick={handleLogout}
                           className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                         >

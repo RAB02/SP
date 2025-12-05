@@ -23,6 +23,10 @@ app.use(cookieParser());
 
 app.use("/admin", adminRoutes);
 app.use("/", userRoutes);
+app.use(
+  "/uploads/apartments",
+  express.static(path.join(__dirname, "uploads", "apartments"))
+);
 
 // DB init
 let db;
@@ -35,18 +39,6 @@ let db;
     });
 
     app.locals.db = db;
-
-    // await db.exec(`
-    //   CREATE TABLE IF NOT EXISTS MaintenanceRequests (
-    //     request_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    //     user_id INTEGER NOT NULL,
-    //     selected_issues TEXT NOT NULL,
-    //     additional_details TEXT,
-    //     status TEXT DEFAULT 'pending',
-    //     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    //     FOREIGN KEY (user_id) REFERENCES Users(user_id)
-    //   )
-    // `);
 
   } catch (err) {
     console.error("Error initializing database:", err);

@@ -57,6 +57,61 @@ router.get("/rentals", async (req, res) => {
   }
 });
 
+// GET /rentals/:id
+router.get("/rentals/:id", async (req, res) => {
+  const db = req.app.locals.db;
+
+  try {
+    const id = req.params.id;
+    const rental = await db.get(
+      "SELECT * FROM Apartments WHERE apartment_id = ?",
+      [id]
+    );
+
+    if (!rental) {
+      return res.status(404).json({ error: "Rental not found" });
+    }
+
+    const images = await db.all(
+      "SELECT image_url FROM ApartmentImages WHERE apartment_id = ?",
+      [id]
+    );
+
+    console.log("Images:", images);
+
+    // helper to normalize URLs
+    const normalizeImageUrl = (url) => {
+      if (!url) {
+        return "https://via.placeholder.com/288x224?text=No+Image";
+      }
+
+      // already full http/https url (like your Pexels ones)
+      if (url.startsWith("http")) {
+        return url;
+      }
+
+      // local path from uploads
+      const path = url.startsWith("/") ? url : `/${url}`;
+      return `http://localhost:8080${path}`;
+    };
+
+    // convert [{ image_url: "..." }] -> ["..."]
+    const imageUrls = images.map((row) => normalizeImageUrl(row.image_url));
+
+    const rentalWithImages = {
+      ...rental,
+      Img: imageUrls, // 👈 now an array of strings
+    };
+
+
+    console.log("Final combined object:", rentalWithImages);
+    res.json(rentalWithImages);
+  } catch (error) {
+    console.error("Error fetching rental details:", error);
+    res.status(500).json({ error: "Failed to fetch rental details" });
+  }
+});
+
 // POST /signup
 router.post("/signup", async (req, res) => {
   const db = req.app.locals.db;
@@ -162,46 +217,6 @@ router.post("/logout", (req, res) => {
     sameSite: "lax",
   });
   res.json({ success: true, message: "User logged out" });
-});
-
-// GET /rentals/:id
-router.get("/rentals/:id", async (req, res) => {
-  const db = req.app.locals.db;
-
-  try {
-    const id = req.params.id;
-    const rental = await db.get(
-      "SELECT * FROM Apartments WHERE apartment_id = ?",
-      [id]
-    );
-
-    if (!rental) {
-      return res.status(404).json({ error: "Rental not found" });
-    }
-
-    const images = await db.all(
-      "SELECT image_url FROM ApartmentImages WHERE apartment_id = ?",
-      [id]
-    );
-    const descriptions = await db.all(
-      "SELECT description FROM ApartmentImages WHERE apartment_id = ?",
-      [id]
-    );
-    console.log("Images:", images);
-    console.log("Descriptions:", descriptions);
-
-    const rentalWithImages = {
-      ...rental,
-      Img: images || [],
-      Des: descriptions || [],
-    };
-
-    console.log("Final combined object:", rentalWithImages);
-    res.json(rentalWithImages);
-  } catch (error) {
-    console.error("Error fetching rental details:", error);
-    res.status(500).json({ error: "Failed to fetch rental details" });
-  }
 });
 
 // POST /maintenance/request
