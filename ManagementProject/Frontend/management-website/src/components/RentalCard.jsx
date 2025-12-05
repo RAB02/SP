@@ -3,27 +3,25 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function RentalCard({ rental }) {
-  <button
-    onClick={() => {
-      localStorage.removeItem("user");
-      window.location.href = "/login";
-    }}
-    className="text-sm text-red-600 underline hover:text-red-800 text-center block mb-4"
-  >
-    Log out
-  </button>;
   const petsAllowed = "OK";
+
+  const imageUrl = rental.Img
+    ? rental.Img.startsWith("http")
+      ? rental.Img
+      : `http://localhost:8080${rental.Img.startsWith("/") ? rental.Img : `/${rental.Img}`}`
+    : "https://via.placeholder.com/288x224?text=No+Image";
 
   return (
     <div className="Card flex items-center flex-col">
       <div className="RentalImage relative bg-black w-72 h-56 overflow-hidden rounded shadow-xl pl-1 pr-1">
         <Link href={`/rentals/${rental.apartment_id}`}>
           <img
-            src={rental.Img || "https://via.placeholder.com/288x224?text=No+Image"}
+            src={imageUrl}
             alt={`${rental.apartment_name} image`}
             className="w-full h-full object-cover object-center cursor-pointer transition-transform duration-300 hover:scale-105"
             onError={(e) => {
-              e.target.src = "https://via.placeholder.com/288x224?text=No+Image";
+              e.currentTarget.src =
+                "https://via.placeholder.com/288x224?text=No+Image";
             }}
           />
         </Link>

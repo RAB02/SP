@@ -41,7 +41,7 @@ export default function TenantProfile() {
                 <div className="space-y-1 text-gray-800">
                   <p><span className="font-medium">Name:</span> {user.username}</p>
                   <p><span className="font-medium">Email:</span> {user.email}</p>
-                  <p><span className="font-medium">Phone:</span> {user.phone}</p>
+                  {/* <p><span className="font-medium">Phone:</span> {user.phone}</p> */}
                   {/* <p className="text-sm text-gray-600">ID: {user.id}</p> */}
                 </div>
               ) : (
