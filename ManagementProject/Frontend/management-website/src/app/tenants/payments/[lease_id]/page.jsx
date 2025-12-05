@@ -172,13 +172,66 @@ export default function UserPayment() {
                   name="amount"
                   type="number"
                   value={form.amount}
-                  onChange={handleChange}
-                  className="input-box"
+                  readOnly
                   placeholder="1200"
                 />
               </div>
 
-              {/* TODO: Card inputs / payment method */}
+              <div>
+              <label className="block text-lg font-medium text-slate-700 mb-1">
+                Card Number
+              </label>
+              <input
+                type="text"
+                name="cardNumber"
+                value={form.cardNumber}
+                onChange={handleChange}
+                maxLength={16}
+                required
+                inputMode="numeric"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm tracking-[0.16em] focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
+                placeholder="1234 5678 9012 3456"
+              />
+              <p className="mt-1 text-xs text-slate-400">
+                We accept Visa, Mastercard, and more.
+              </p>
+            </div>
+
+            {/* Expiry + CVV */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-lg font-medium text-slate-700 mb-1">
+                  Expiry (MM/YY)
+                </label>
+                <input
+                  type="text"
+                  name="expiry"
+                  value={form.expiry}
+                  onChange={handleChange}
+                  required
+                  maxLength={5}
+                  inputMode="numeric"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
+                  placeholder="09/27"
+                />
+              </div>
+              <div>
+                <label className="block text-lg font-medium text-slate-700 mb-1">
+                  CVV
+                </label>
+                <input
+                  type="password"
+                  name="cvv"
+                  value={form.cvv}
+                  onChange={handleChange}
+                  required
+                  inputMode="numeric"
+                  maxLength={4}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
+                  placeholder="123"
+                />
+              </div>
+            </div>
 
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
