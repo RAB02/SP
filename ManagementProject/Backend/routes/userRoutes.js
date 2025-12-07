@@ -432,6 +432,7 @@ router.post("/apply", async (req, res) => {
 
   try {
     const {
+      apartmentId,
       firstName,
       lastName,
       email,
@@ -458,12 +459,13 @@ router.post("/apply", async (req, res) => {
 
     const result = await db.run(
       `INSERT INTO RentalApplications (
-        first_name, last_name, email, phone, date_of_birth, ssn,
+        apartment_id, first_name, last_name, email, phone, date_of_birth, ssn,
         employer, job_title, monthly_income, employment_length,
         current_address, rent_amount, landlord_name, landlord_phone,
         consent_to_background_check, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
+        apartmentId || null,
         firstName,
         lastName,
         email,
@@ -488,7 +490,7 @@ router.post("/apply", async (req, res) => {
       applicationId: result.lastID,
     });
 
-    console.log(`Rental application created: ID ${result.lastID} for ${email}`);
+    console.log(`Rental application created: ID ${result.lastID} for ${email}${apartmentId ? ` (Apartment ID: ${apartmentId})` : ''}`);
   } catch (error) {
     console.error("Error creating rental application:", error);
     res.status(500).json({ error: "Failed to submit application" });

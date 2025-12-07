@@ -58,6 +58,7 @@ async function initializeDatabase() {
     await db.exec(`
       CREATE TABLE IF NOT EXISTS RentalApplications (
         application_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        apartment_id INTEGER,
         first_name TEXT NOT NULL,
         last_name TEXT NOT NULL,
         email TEXT NOT NULL,
@@ -74,10 +75,28 @@ async function initializeDatabase() {
         landlord_phone TEXT,
         consent_to_background_check BOOLEAN DEFAULT 0,
         status TEXT DEFAULT 'pending',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (apartment_id) REFERENCES Apartments(apartment_id)
       )
     `);
     console.log("RentalApplications table ready");
+    
+    // Add apartment_id column if it doesn't exist (for existing tables)
+    try {
+      // Check if column exists by trying to query it
+      await db.get("SELECT apartment_id FROM RentalApplications LIMIT 1");
+      console.log("apartment_id column already exists in RentalApplications table");
+    } catch (checkErr) {
+      // Column doesn't exist, add it
+      try {
+        await db.exec(`
+          ALTER TABLE RentalApplications ADD COLUMN apartment_id INTEGER
+        `);
+        console.log("Added apartment_id column to RentalApplications table");
+      } catch (alterErr) {
+        console.error("Error adding apartment_id column:", alterErr);
+      }
+    }
   } catch (err) {
     console.error("Error creating RentalApplications table:", err);
   }
