@@ -23,20 +23,26 @@ app.use(cookieParser());
 
 app.use("/admin", adminRoutes);
 app.use("/", userRoutes);
+app.use(
+  "/uploads/apartments",
+  express.static(path.join(__dirname, "uploads", "apartments"))
+);
 
-// DB init
 let db;
 
-async function initializeDatabase() {
-  db = await open({
-    filename: "./db/new_management.db",
-    driver: sqlite3.Database,
-  });
-  
-  app.locals.db = db;
-
-  // Initialize MaintenanceRequests table if it doesn't exist
+// Proper async initialization + start server only AFTER DB is ready
+async function startServer() {
   try {
+    // Open database
+    db = await open({
+      filename: "./db/new_management.db",
+      driver: sqlite3.Database,
+    });
+
+    app.locals.db = db;
+    console.log("Database connected successfully");
+
+    // Create MaintenanceRequests table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS MaintenanceRequests (
         request_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,12 +55,8 @@ async function initializeDatabase() {
       )
     `);
     console.log("MaintenanceRequests table ready");
-  } catch (err) {
-    console.error("Error creating MaintenanceRequests table:", err);
-  }
 
-  // Initialize RentalApplications table if it doesn't exist
-  try {
+    // Create RentalApplications table + ensure apartment_id exists
     await db.exec(`
       CREATE TABLE IF NOT EXISTS RentalApplications (
         application_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,34 +82,26 @@ async function initializeDatabase() {
       )
     `);
     console.log("RentalApplications table ready");
-    
-    // Add apartment_id column if it doesn't exist (for existing tables)
-    try {
-      // Check if column exists by trying to query it
-      await db.get("SELECT apartment_id FROM RentalApplications LIMIT 1");
-      console.log("apartment_id column already exists in RentalApplications table");
-    } catch (checkErr) {
-      // Column doesn't exist, add it
-      try {
-        await db.exec(`
-          ALTER TABLE RentalApplications ADD COLUMN apartment_id INTEGER
-        `);
-        console.log("Added apartment_id column to RentalApplications table");
-      } catch (alterErr) {
-        console.error("Error adding apartment_id column:", alterErr);
-      }
+
+    // Add apartment_id column if missing (safe check)
+    const tableInfo = await db.all("PRAGMA table_info(RentalApplications)");
+    if (!tableInfo.some(col => col.name === 'apartment_id')) {
+      await db.exec("ALTER TABLE RentalApplications ADD COLUMN apartment_id INTEGER");
+      console.log("Added missing apartment_id column");
+    } else {
+      console.log("apartment_id column already exists");
     }
+
+    // Start the server only after everything is ready
+    app.listen(PORT, () => {
+      console.log(`Server running at http://localhost:${PORT}`);
+    });
+
   } catch (err) {
-    console.error("Error creating RentalApplications table:", err);
+    console.error("Failed to start server:", err);
+    process.exit(1); // Stop the process if DB fails
   }
 }
 
-// Start server after database is initialized
-initializeDatabase()
-  .then(() => {
-    app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
-  })
-  .catch((err) => {
-    console.error("Failed to initialize database:", err);
-    process.exit(1);
-  });
+// Start everything
+startServer();

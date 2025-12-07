@@ -54,7 +54,9 @@ export default function RecentlyViewed() {
     return (
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold mb-2">Recently viewed</h2>
-        <p className="text-sm text-gray-600">You haven't viewed any apartments yet.</p>
+        <p className="text-sm text-gray-600">
+          You haven't viewed any apartments yet.
+        </p>
       </div>
     );
   }

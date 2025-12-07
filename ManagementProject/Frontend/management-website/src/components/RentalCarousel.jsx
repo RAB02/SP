@@ -94,9 +94,32 @@ export function RentalCarousel({ images }) {
     );
   }
 
-  const slides = images.map((img, i) => ({
-    src: img.image_url,
-  }));
+  // Normalize images: support both string URLs and { image_url } objects
+  const slides = images
+    .map((img) => {
+      if (!img) return null;
+
+      // if backend sends string
+      if (typeof img === "string") {
+        return { src: img };
+      }
+
+      // if backend still sends objects sometimes
+      if (typeof img === "object" && img.image_url) {
+        return { src: img.image_url };
+      }
+
+      return null;
+    })
+    .filter(Boolean); // remove nulls
+
+  if (!slides.length) {
+    return (
+      <div className="w-full h-64 bg-gray-200 flex items-center justify-center rounded-lg">
+        <p className="text-gray-500">No valid images</p>
+      </div>
+    );
+  }
 
   const handlePreviousClick = () => {
     setCurrent((prev) => (prev - 1 + slides.length) % slides.length);

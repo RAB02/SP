@@ -1,7 +1,12 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { verifyAdmin, verifyAdminStatus } = require("../middleware/authAdmin.js");
+const path = require("path");
+const multer = require("multer");
+const {
+  verifyAdmin,
+  verifyAdminStatus,
+} = require("../middleware/authAdmin.js");
 
 const router = express.Router();
 const SECRET_KEY = "SECRET_KEY"; // same as in server.js
@@ -288,5 +293,73 @@ router.post("/payments", verifyAdmin, async (req, res) => {
     res.status(500).json({ error: "Failed to create payment" });
   }
 });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // uploads/apartments relative to this file
+    cb(null, path.join(__dirname, "..", "uploads", "apartments"));
+  },
+  filename: (req, file, cb) => {
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, unique + ext);
+  },
+});
+
+const upload = multer({ storage });
+
+router.post("/add-lease", verifyAdmin, upload.array("images"),async (req, res) => {
+    const db = req.app.locals.db;
+    try {
+      const {
+        apartment_name,
+        address,
+        lat,
+        lng,
+        bed,
+        bath,
+        pricing,
+      } = req.body;
+
+      const result = await db.run(
+        `INSERT INTO Apartments
+          (apartment_name, address, bed, bath, pricing, lat, lon, is_occupied)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
+        [
+          apartment_name,
+          address,
+          bed || null,
+          bath || null,
+          pricing || null,
+          lat,
+          lng,
+        ]
+      );
+
+      const apartmentId = result.lastID;
+
+      // 2) Insert images into ApartmentImages
+      const files = req.files || [];
+      for (const file of files) {
+        const relUrl = `/uploads/apartments/${file.filename}`;
+
+        await db.run(
+          `INSERT INTO ApartmentImages (apartment_id, image_url)
+           VALUES (?, ?)`,
+          [apartmentId, relUrl]
+        );
+      }
+
+      res.json({
+        message: "Apartment and images saved",
+        apartment_id: apartmentId,
+        images_saved: files.length,
+      });
+    } catch (err) {
+      console.error("Error adding apartment:", err);
+      res.status(500).json({ error: "Failed to add apartment" });
+    }
+  }
+);
 
 module.exports = router;
