@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const ApplyForm = () => {
   const [formData, setFormData] = useState({
+    apartmentId: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -23,6 +24,29 @@ const ApplyForm = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: "", text: "" });
+  const [apartments, setApartments] = useState([]);
+  const [loadingApartments, setLoadingApartments] = useState(true);
+
+  // Fetch available apartments on component mount
+  useEffect(() => {
+    const fetchApartments = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/rentals");
+        if (response.ok) {
+          const data = await response.json();
+          setApartments(data || []);
+        } else {
+          console.error("Failed to fetch apartments");
+        }
+      } catch (error) {
+        console.error("Error fetching apartments:", error);
+      } finally {
+        setLoadingApartments(false);
+      }
+    };
+
+    fetchApartments();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -45,6 +69,7 @@ const ApplyForm = () => {
         },
         credentials: "include",
         body: JSON.stringify({
+          apartmentId: formData.apartmentId || null,
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
@@ -72,6 +97,7 @@ const ApplyForm = () => {
         });
         // Reset form
         setFormData({
+          apartmentId: "",
           firstName: "",
           lastName: "",
           email: "",
@@ -128,6 +154,42 @@ const ApplyForm = () => {
           </div>
         )}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {/* Apartment Selection Section */}
+          <div className="border-b border-gray-200 pb-6">
+            <h3 className="text-lg font-medium text-gray-900">
+              Apartment Selection
+            </h3>
+            <div className="mt-4">
+              <label
+                htmlFor="apartment-id"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Select Apartment <span className="text-red-500">*</span>
+              </label>
+              {loadingApartments ? (
+                <p className="mt-1 text-sm text-gray-500">Loading apartments...</p>
+              ) : (
+                <select
+                  name="apartmentId"
+                  id="apartment-id"
+                  value={formData.apartmentId}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="">-- Please select an apartment --</option>
+                  {apartments.map((apartment) => (
+                    <option key={apartment.apartment_id} value={apartment.apartment_id}>
+                      {apartment.apartment_name || apartment.address} - ${apartment.pricing}/month ({apartment.bed} bed, {apartment.bath} bath)
+                    </option>
+                  ))}
+                </select>
+              )}
+              {apartments.length === 0 && !loadingApartments && (
+                <p className="mt-1 text-sm text-red-500">No available apartments found.</p>
+              )}
+            </div>
+          </div>
           {/* Personal Information Section */}
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-medium text-gray-900">
