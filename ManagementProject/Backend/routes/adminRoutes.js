@@ -318,6 +318,9 @@ router.post(
       const { apartment_name, address, lat, lng, bed, bath, pricing } =
         req.body;
 
+      const latNum = parseFloat(lat);
+      const lonNum = parseFloat(lng);
+
       const result = await db.run(
         `INSERT INTO Apartments
           (apartment_name, address, bed, bath, pricing, lat, lon, is_occupied)
@@ -328,8 +331,8 @@ router.post(
           bed || null,
           bath || null,
           pricing || null,
-          lat,
-          lng,
+          latNum,
+          lonNum,
         ]
       );
 
@@ -365,6 +368,7 @@ router.get("/applicants", verifyAdmin, async (req, res) => {
   try {
     const applicants = await db.all(`
       SELECT * From RentalApplications
+      JOIN Apartments ON RentalApplications.apartment_id = Apartments.apartment_id
     `);
 
     console.log("Applicants:", applicants);
@@ -419,12 +423,16 @@ router.get("/maintenance", verifyAdmin, async (req, res) => {
         m.selected_issues,
         m.additional_details,
         m.status,
-        m.created_at
+        m.created_at,
+        a.address
       FROM MaintenanceRequests m
       JOIN Users u ON m.user_id = u.user_id
+      JOIN Leases l ON m.lease_id = l.lease_id
+      JOIN Apartments a ON l.apartment_id = a.apartment_id
       ORDER BY m.created_at DESC;
     `);
 
+    console.log("Maintenance Requests:", requests);
     res.json({ requests });
   } catch (err) {
     console.error("Error fetching maintenance requests:", err);
