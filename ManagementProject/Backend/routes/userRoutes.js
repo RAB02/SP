@@ -100,9 +100,8 @@ router.get("/rentals/:id", async (req, res) => {
 
     const rentalWithImages = {
       ...rental,
-      Img: imageUrls, // 👈 now an array of strings
+      Img: imageUrls, // now an array of strings
     };
-
 
     console.log("Final combined object:", rentalWithImages);
     res.json(rentalWithImages);
@@ -219,12 +218,50 @@ router.post("/logout", (req, res) => {
   res.json({ success: true, message: "User logged out" });
 });
 
-// POST /maintenance/request
+// NEW ROUTE 
+// GET /tenants/leases/active
+router.get("/tenants/leases/active", verifyUser, async (req, res) => {
+  const db = req.app.locals.db;
+  try {
+    const userId = req.user.id;
+
+    const leases = await db.all(
+      `
+      SELECT
+        l.lease_id AS id,
+        a.address,
+        a.apartment_name
+      FROM Leases l
+      JOIN Apartments a ON l.apartment_id = a.apartment_id
+      WHERE l.user_id = ? AND l.status = 1
+      ORDER BY l.start_date DESC
+      `,
+      [userId]
+    );
+
+    // Format exactly how the frontend expects it
+    const formatted = leases.map(lease => ({
+      id: lease.id,
+      propertyAddress: lease.address 
+        ? lease.address 
+        : (lease.apartment_name || "My Apartment"),
+      unitNumber: null, // we don't have unit number → frontend will just show address
+      isCurrent: true
+    }));
+
+    res.json({ leases: formatted });
+  } catch (err) {
+    console.error("Error fetching active leases:", err);
+    res.status(500).json({ error: "Failed to load your properties" });
+  }
+});
+
+// UPDATED MAINTENANCE ROUTE – now saves lease_id
 router.post("/maintenance/request", verifyUser, async (req, res) => {
   const db = req.app.locals.db;
 
   try {
-    const { selectedIssues, additionalDetails } = req.body;
+    const { selectedIssues, additionalDetails, leaseId } = req.body; // leaseId optional
     const userId = req.user.id;
 
     if (!selectedIssues || selectedIssues.length === 0) {
@@ -236,9 +273,9 @@ router.post("/maintenance/request", verifyUser, async (req, res) => {
     const issuesJson = JSON.stringify(selectedIssues);
 
     const result = await db.run(
-      `INSERT INTO MaintenanceRequests (user_id, selected_issues, additional_details, status)
-       VALUES (?, ?, ?, 'pending')`,
-      [userId, issuesJson, additionalDetails || ""]
+      `INSERT INTO MaintenanceRequests (user_id, lease_id, selected_issues, additional_details, status)
+       VALUES (?, ?, ?, ?, 'pending')`,
+      [userId, leaseId || null, issuesJson, additionalDetails || ""]
     );
 
     res.json({
@@ -248,7 +285,7 @@ router.post("/maintenance/request", verifyUser, async (req, res) => {
     });
 
     console.log(
-      `Maintenance request created: ID ${result.lastID} by user ${userId}`
+      `Maintenance request created: ID ${result.lastID} by user ${userId}, lease: ${leaseId || "none selected"}`
     );
   } catch (error) {
     console.error("Error creating maintenance request:", error);
@@ -263,7 +300,7 @@ router.get("/maintenance/requests", verifyUser, async (req, res) => {
   try {
     const userId = req.user.id;
     const requests = await db.all(
-      `SELECT request_id, selected_issues, additional_details, status, created_at
+      `SELECT request_id, selected_issues, additional_details, status, created_at, lease_id
        FROM MaintenanceRequests
        WHERE user_id = ?
        ORDER BY created_at DESC`,
@@ -319,10 +356,8 @@ router.get("/tenants/profile", verifyUser, async (req, res) => {
     const normalizeImageUrl = (url) => {
       if (!url) return null;
 
-      // external URL (pexels, etc.)
       if (url.startsWith("http")) return url;
 
-      // local file
       const path = url.startsWith("/") ? url : `/${url}`;
       return `http://localhost:8080${path}`;
     };
@@ -344,7 +379,6 @@ router.get("/tenants/payments/:lease_id", verifyUser, async (req, res) => {
   const { lease_id } = req.params;
 
   try {
-    // adjust this line to match whatever verifyUser sets
     const user_id = req.user.id ?? req.user.user_id;
 
     if (!user_id) {
@@ -438,7 +472,7 @@ router.post("/tenants/payments", verifyUser, async (req, res) => {
 
     const payment = {
       id: row.payment_id,
-      name:row.username,
+      name: row.username,
       tenantName: row.email,
       apartment: row.address,
       leaseLabel: row.address,

@@ -92,6 +92,18 @@ async function startServer() {
       console.log("apartment_id column already exists");
     }
 
+    // Add lease_id column if missing (safe check)
+    // Auto-add lease_id column if it doesn't exist yet
+    db.run(`
+      ALTER TABLE MaintenanceRequests 
+      ADD COLUMN lease_id INTEGER REFERENCES Leases(lease_id)
+    `, (err) => {
+      if (err && !err.message.includes("duplicate column name")) {
+        console.error("Error adding lease_id column:", err.message);
+      }
+      // If column already exists, SQLite throws "duplicate column name" → we ignore it
+    });
+    
     // Start the server only after everything is ready
     app.listen(PORT, () => {
       console.log(`Server running at http://localhost:${PORT}`);
