@@ -62,6 +62,20 @@ export default function MaintenanceRequestsPage() {
       alert(err.message || "Error updating status");
     }
   };
+  const formatIssues = (value) => {
+  if (!value) return "—";
+  try {
+    // handle if it's a JSON string like '["HVAC...", "Plumbing..."]'
+    const parsed = typeof value === "string" ? JSON.parse(value) : value;
+    if (Array.isArray(parsed)) {
+      return parsed.join(", ");
+    }
+    return String(parsed);
+  } catch {
+    // if it's not valid JSON, just show it as is
+    return String(value);
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -101,6 +115,9 @@ export default function MaintenanceRequestsPage() {
                       Tenant
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-slate-700">
+                      Listing
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700">
                       Issues
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-slate-700">
@@ -115,62 +132,68 @@ export default function MaintenanceRequestsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {requests.map((req) => (
-                    <tr
-                      key={req.request_id}
-                      className="border-b border-slate-100 hover:bg-slate-50"
-                    >
-                      {/* Tenant / User */}
-                      <td className="px-4 py-3">
-                        <div className="text-slate-900 font-medium">
-                          {/* tweak this to match what your backend sends */}
-                          {req.username || req.email || `User #${req.user_id}`}
-                        </div>
-                      </td>
+  {requests.map((req) => (
+    <tr
+      key={req.request_id}
+      className="border-b border-slate-100 hover:bg-slate-50"
+    >
+      {/* Tenant / User */}
+      <td className="px-4 py-3 align-top">
+        <div className="text-slate-900 font-medium">
+          {req.username || req.email || `User #${req.user_id}`}
+        </div>
+      </td>
 
-                      {/* Issues */}
-                      <td className="px-4 py-3">
-                        <div className="text-slate-900 break-words">
-                          {req.selected_issues}
-                        </div>
-                      </td>
+      {/* Listing */}
+      <td className="px-4 py-3 align-top">
+        <div className="text-slate-900 font-medium max-w-[160px] whitespace-pre-line">
+          {req.address || "—"}
+        </div>
+      </td>
 
-                      {/* Additional details */}
-                      <td className="px-4 py-3">
-                        <div className="text-slate-900 break-words">
-                          {req.additional_details || "—"}
-                        </div>
-                      </td>
+      {/* Issues */}
+      <td className="px-4 py-3 align-top">
+        <div className="text-slate-900 max-w-[260px] whitespace-normal">
+          {formatIssues(req.selected_issues)}
+        </div>
+      </td>
 
-                      {/* Status */}
-                      <td className="px-4 py-3">
-                        <select
-                          className={[
-                            "rounded-full px-2.5 py-1 text-xs font-medium border",
-                            req.status === "completed"
-                              ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                              : req.status === "in_progress"
-                              ? "bg-sky-100 text-sky-700 border-sky-200"
-                              : "bg-amber-100 text-amber-700 border-amber-200",
-                          ].join(" ")}
-                          value={req.status}
-                          onChange={(e) =>
-                            updateStatus(req.request_id, e.target.value)
-                          }
-                        >
-                          <option value="pending">pending</option>
-                          <option value="in_progress">in_progress</option>
-                          <option value="completed">completed</option>
-                        </select>
-                      </td>
+      {/* Additional details */}
+      <td className="px-4 py-3 align-top">
+        <div className="text-slate-900 max-w-[220px] whitespace-pre-line">
+          {req.additional_details || "—"}
+        </div>
+      </td>
 
-                      {/* Created at */}
-                      <td className="px-4 py-3 text-slate-900 whitespace-nowrap">
-                        {req.created_at}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+      {/* Status */}
+      <td className="px-4 py-3 align-top">
+        <select
+          className={[
+            "rounded-full px-2.5 py-1 text-xs font-medium border",
+            req.status === "completed"
+              ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+              : req.status === "in_progress"
+              ? "bg-sky-100 text-sky-700 border-sky-200"
+              : "bg-amber-100 text-amber-700 border-amber-200",
+          ].join(" ")}
+          value={req.status}
+          onChange={(e) =>
+            updateStatus(req.request_id, e.target.value)
+          }
+        >
+          <option value="pending">pending</option>
+          <option value="in_progress">in_progress</option>
+          <option value="completed">completed</option>
+        </select>
+      </td>
+
+      {/* Created at */}
+      <td className="px-4 py-3 align-top text-slate-900 whitespace-nowrap">
+        {req.created_at}
+      </td>
+    </tr>
+  ))}
+</tbody>
               </table>
             </div>
           )}

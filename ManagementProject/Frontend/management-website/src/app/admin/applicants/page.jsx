@@ -135,10 +135,10 @@ export default function RentalApplicationsPage() {
                       Employment
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-slate-700">
-                      Rent / Address
+                      Address / Rent
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-slate-700">
-                      Landlord
+                      Current Landlord
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-slate-700">
                       Status
@@ -159,24 +159,20 @@ export default function RentalApplicationsPage() {
                         <div className="font-medium text-slate-900">
                           {app.first_name} {app.last_name}
                         </div>
-                        {app.date_of_birth && (
-                          <div className="text-xs text-slate-500">
-                            DOB:{" "}
-                            {new Date(app.date_of_birth).toLocaleDateString()}
-                          </div>
-                        )}
+
+                        <div className="text-xs text-slate-500">
+                          DOB:{" "}
+                          {new Date(app.date_of_birth).toLocaleDateString()}
+                        </div>
                       </td>
 
                       {/* Contact */}
                       <td className="px-4 py-3">
-                        {app.email && (
-                          <div className="text-slate-900">{app.email}</div>
-                        )}
-                        {app.phone && (
-                          <div className="text-xs text-slate-500">
-                            {app.phone}
-                          </div>
-                        )}
+                        <div className="text-slate-900">{app.email}</div>
+
+                        <div className="text-xs text-slate-500">
+                          {app.phone}
+                        </div>
                       </td>
 
                       {/* Employment */}
@@ -184,49 +180,37 @@ export default function RentalApplicationsPage() {
                         <div className="text-slate-900">
                           {app.job_title || "N/A"}
                         </div>
-                        {app.employer && (
-                          <div className="text-xs text-slate-500">
-                            {app.employer}
-                          </div>
-                        )}
-                        {app.monthly_income && (
-                          <div className="text-xs text-slate-500">
-                            Income: ${app.monthly_income}
-                          </div>
-                        )}
-                        {app.employment_length && (
-                          <div className="text-xs text-slate-500">
-                            {app.employment_length} yrs employed
-                          </div>
-                        )}
+                        <div className="text-xs text-slate-500">
+                          {app.employer}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          Income: ${app.monthly_income}
+                        </div>
+
+                        <div className="text-xs text-slate-500">
+                          {app.employment_length} yrs employed
+                        </div>
                       </td>
 
                       {/* Rent + Address */}
                       <td className="px-4 py-3">
-                        {app.rent_amount && (
-                          <div className="text-slate-900">
-                            Rent: ${app.rent_amount}
-                          </div>
-                        )}
-                        {app.current_address && (
-                          <div className="text-xs text-slate-500">
-                            {app.current_address}
-                          </div>
-                        )}
+                        <div className="text-slate-900">
+                          {app.address}
+                        </div>
+
+                        <div className="text-xs text-slate-500">
+                          Rent: ${app.pricing}
+                        </div>
                       </td>
 
                       {/* Landlord */}
                       <td className="px-4 py-3">
-                        {app.landlord_name && (
-                          <div className="text-slate-900">
-                            {app.landlord_name}
-                          </div>
-                        )}
-                        {app.landlord_phone && (
-                          <div className="text-xs text-slate-500">
-                            {app.landlord_phone}
-                          </div>
-                        )}
+                        <div className="text-slate-900">
+                          {app.landlord_name}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {app.landlord_phone}
+                        </div>
                       </td>
 
                       {/* Status */}

@@ -14,7 +14,7 @@ export default function AddApartmentPage() {
   };
 
   const [form, setForm] = useState(initialForm);
-  const [files, setFiles] = useState([]);       // File[]
+  const [files, setFiles] = useState([]); // File[]
   const [previews, setPreviews] = useState([]); // blob URLs
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -122,6 +122,7 @@ export default function AddApartmentPage() {
                   Apartment Name
                 </label>
                 <input
+                  required
                   type="text"
                   name="apartment_name"
                   value={form.apartment_name}
@@ -136,6 +137,7 @@ export default function AddApartmentPage() {
                   Street Address
                 </label>
                 <input
+                  required
                   type="text"
                   name="address"
                   value={form.address}
@@ -152,11 +154,13 @@ export default function AddApartmentPage() {
                   Beds
                 </label>
                 <input
+                  required
                   type="number"
                   name="bed"
                   value={form.bed}
                   onChange={handleChange}
                   min="0"
+                  step={"1"}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 />
               </div>
@@ -166,6 +170,7 @@ export default function AddApartmentPage() {
                   Baths
                 </label>
                 <input
+                  required
                   type="number"
                   name="bath"
                   value={form.bath}
@@ -188,8 +193,24 @@ export default function AddApartmentPage() {
                     type="number"
                     name="pricing"
                     step="0.01"
+                    inputMode="decimal"
                     value={form.pricing}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      // Allow empty input
+                      if (value === "") {
+                        setForm((prev) => ({ ...prev, pricing: "" }));
+                        return;
+                      }
+
+                      // Only allow numbers with up to 2 decimals
+                      const regex = /^\d+(\.\d{0,2})?$/;
+
+                      if (regex.test(value)) {
+                        setForm((prev) => ({ ...prev, pricing: value }));
+                      }
+                    }}
                     placeholder="1200"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                   />
@@ -204,12 +225,38 @@ export default function AddApartmentPage() {
                   Latitude
                 </label>
                 <input
-                  type="number"
+                  required
+                  type="text"
                   name="lat"
-                  step="any"
+                  inputMode="decimal"
                   value={form.lat}
-                  onChange={handleChange}
-                  placeholder="26.2034"
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // Allow empty while typing
+                    if (value === "") {
+                      setForm((prev) => ({ ...prev, lat: "" }));
+                      return;
+                    }
+
+                    // Exactly 2 digits before decimal, up to 4 while typing
+                    const regex = /^\d{0,2}(\.\d{0,4})?$/;
+
+                    if (regex.test(value)) {
+                      setForm((prev) => ({ ...prev, lat: value }));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const strictRegex = /^\d{2}\.\d{4}$/;
+
+                    if (!strictRegex.test(e.target.value)) {
+                      alert(
+                        "Latitude must be exactly two digits before and four after the decimal (ex: 26.2012)"
+                      );
+                      setForm((prev) => ({ ...prev, lat: "" }));
+                    }
+                  }}
+                  placeholder="26.2012"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 />
               </div>
@@ -219,11 +266,37 @@ export default function AddApartmentPage() {
                   Longitude
                 </label>
                 <input
-                  type="number"
+                  required
+                  type="text"
                   name="lng"
-                  step="any"
+                  inputMode="decimal"
                   value={form.lng}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // Allow empty while typing
+                    if (value === "") {
+                      setForm((prev) => ({ ...prev, lng: "" }));
+                      return;
+                    }
+
+                    // Optional -, exactly 2 digits before decimal, exactly 4 after
+                    const regex = /^-?\d{0,2}(\.\d{0,4})?$/;
+
+                    if (regex.test(value)) {
+                      setForm((prev) => ({ ...prev, lng: value }));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const strictRegex = /^-?\d{2}\.\d{4}$/;
+
+                    if (!strictRegex.test(e.target.value)) {
+                      alert(
+                        "Format must be exactly two digits before and four after the decimal (ex: -98.2300)"
+                      );
+                      setForm((prev) => ({ ...prev, lng: "" }));
+                    }
+                  }}
                   placeholder="-98.2300"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 />
