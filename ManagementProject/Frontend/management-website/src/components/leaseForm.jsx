@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-export default function AddLeaseForm({ apartments = [], users = [], refreshData }) {
+export default function  AddLeaseForm({ apartments = [], users = [], refreshData }) {
   const [leases, setLeases] = useState([]);
   const [form, setForm] = useState({
     apartment_id: "",
