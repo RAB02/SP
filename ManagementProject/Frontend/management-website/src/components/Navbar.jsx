@@ -164,7 +164,23 @@ export default function Navbar() {
                           href="/admin/add-lease"
                           className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                         >
-                          Add Lease
+                          Add Apartments
+                        </a>
+                      </MenuItem>
+                      <MenuItem>
+                        <a
+                          href="/admin/applicants"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
+                          Applicants
+                        </a>
+                      </MenuItem>
+                      <MenuItem>
+                        <a
+                          href="/admin/maintenance"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
+                          Maintenance Forms
                         </a>
                       </MenuItem>
                       <MenuItem>

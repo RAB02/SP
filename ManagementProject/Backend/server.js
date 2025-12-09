@@ -27,6 +27,7 @@ app.use(
   "/uploads/apartments",
   express.static(path.join(__dirname, "uploads", "apartments"))
 );
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 let db;
 

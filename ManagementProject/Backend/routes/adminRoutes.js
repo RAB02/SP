@@ -308,18 +308,15 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.post("/add-lease", verifyAdmin, upload.array("images"),async (req, res) => {
+router.post(
+  "/add-lease",
+  verifyAdmin,
+  upload.array("images"),
+  async (req, res) => {
     const db = req.app.locals.db;
     try {
-      const {
-        apartment_name,
-        address,
-        lat,
-        lng,
-        bed,
-        bath,
-        pricing,
-      } = req.body;
+      const { apartment_name, address, lat, lng, bed, bath, pricing } =
+        req.body;
 
       const result = await db.run(
         `INSERT INTO Apartments
@@ -361,5 +358,104 @@ router.post("/add-lease", verifyAdmin, upload.array("images"),async (req, res) =
     }
   }
 );
+
+router.get("/applicants", verifyAdmin, async (req, res) => {
+  const db = req.app.locals.db;
+
+  try {
+    const applicants = await db.all(`
+      SELECT * From RentalApplications
+    `);
+
+    console.log("Applicants:", applicants);
+
+    res.json({ applicants });
+  } catch (err) {
+    console.error("Error fetching applicants:", err);
+    res.status(500).json({ error: "Failed to fetch applicants" });
+  }
+});
+
+router.patch("/applicants/:id/status", verifyAdmin, async (req, res) => {
+  const db = req.app.locals.db;
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const normalized = (status || "").toLowerCase();
+  const allowed = ["pending", "approved", "rejected"];
+
+  if (!allowed.includes(normalized)) {
+    return res.status(400).json({ error: "Invalid status value" });
+  }
+
+  try {
+    const result = await db.run(
+      `UPDATE RentalApplications
+       SET status = ?
+       WHERE application_id = ?`,
+      [normalized, id]
+    );
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    res.json({ message: "Status updated", id, status: normalized });
+  } catch (err) {
+    console.error("Error updating application status:", err);
+    res.status(500).json({ error: "Failed to update application status" });
+  }
+});
+
+router.get("/maintenance", verifyAdmin, async (req, res) => {
+  const db = req.app.locals.db;
+
+  try {
+    const requests = await db.all(`
+      SELECT
+        m.request_id,
+        m.user_id,
+        u.username,
+        m.selected_issues,
+        m.additional_details,
+        m.status,
+        m.created_at
+      FROM MaintenanceRequests m
+      JOIN Users u ON m.user_id = u.user_id
+      ORDER BY m.created_at DESC;
+    `);
+
+    res.json({ requests });
+  } catch (err) {
+    console.error("Error fetching maintenance requests:", err);
+    res.status(500).json({ error: "Failed to fetch maintenance requests" });
+  }
+});
+
+router.patch("/maintenance/:id/status", verifyAdmin, async (req, res) => {
+  const db = req.app.locals.db;
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const normalized = (status || "").toLowerCase();
+  const allowed = ["pending", "in_progress", "completed"];
+
+  if (!allowed.includes(normalized)) {
+    return res.status(400).json({ error: "Invalid status value" });
+  }
+
+  const result = await db.run(
+    `UPDATE MaintenanceRequests
+     SET status = ?
+     WHERE request_id = ?`,
+    [normalized, id]
+  );
+
+  if (result.changes === 0) {
+    return res.status(404).json({ error: "Request not found" });
+  }
+
+  res.json({ message: "Status updated", request_id: id, status: normalized });
+});
 
 module.exports = router;

@@ -42,11 +42,31 @@ export function verifyAdminStatus(req, res) {
  */
 export function verifyAdmin(req, res, next) {
   const { valid, decoded, reason } = decodeAdminToken(req);
+
   if (!valid) {
     console.error("verifyAdmin:", reason);
     return res.status(401).json({ error: reason });
   }
 
   req.admin = decoded;
+
+  // 🔁 SLIDING SESSION REFRESH (extends session while active)
+  const refreshedToken = jwt.sign(
+    {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+    },
+    SECRET_KEY,
+    { expiresIn: "1h" }
+  );
+
+  res.cookie("adminToken", refreshedToken, {
+    httpOnly: true,
+    secure: false, // set true in production with HTTPS
+    sameSite: "lax",
+    maxAge: 60 * 60 * 1000, // 1 hour
+  });
+
   next();
 }
