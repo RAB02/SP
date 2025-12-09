@@ -1,13 +1,19 @@
 "use client";
-import React, { useState, useContext } from "react";
+
+import React, { useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { UserContext } from "@/components/UserContext";
 
 export default function MaintenanceRequest() {
   const { user, setUser } = useContext(UserContext);
   const router = useRouter();
+
   const [selectedIssues, setSelectedIssues] = useState([]);
   const [additionalDetails, setAdditionalDetails] = useState("");
+  const [selectedLeaseId, setSelectedLeaseId] = useState("");
+  const [leases, setLeases] = useState([]);
+  const [loadingLeases, setLoadingLeases] = useState(true);
+
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,10 +33,39 @@ export default function MaintenanceRequest() {
     "Parking issues",
   ];
 
+  // Fetch active leases
+  useEffect(() => {
+    const fetchLeases = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/tenants/leases/active", {
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            setUser(null);
+            window.dispatchEvent(new Event("userChange"));
+            return;
+          }
+          throw new Error("Failed to load leases");
+        }
+
+        const data = await res.json();
+        setLeases(data.leases || []);
+      } catch (err) {
+        setLeases([]);
+      } finally {
+        setLoadingLeases(false);
+      }
+    };
+
+    if (user) fetchLeases();
+  }, [user, setUser]);
+
   const handleCheckboxChange = (issue) => {
     setSelectedIssues((prev) =>
       prev.includes(issue)
-        ? prev.filter((item) => item !== issue)
+        ? prev.filter((i) => i !== issue)
         : [...prev, issue]
     );
   };
@@ -38,8 +73,7 @@ export default function MaintenanceRequest() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    
-    // Validate that at least one issue is selected
+
     if (selectedIssues.length === 0) {
       setError("Please select at least one maintenance issue");
       return;
@@ -48,57 +82,45 @@ export default function MaintenanceRequest() {
     setLoading(true);
 
     try {
+      const payload = {
+        selectedIssues,
+        additionalDetails: additionalDetails.trim(),
+        // Only send leaseId if one was selected
+        ...(selectedLeaseId && { leaseId: selectedLeaseId }),
+      };
+
       const response = await fetch("http://localhost:8080/maintenance/request", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // Include cookies for authentication
-        body: JSON.stringify({
-            selectedIssues,
-            additionalDetails,
-          }),
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
       });
 
-      // Parse response (whether success or error)
-      let data;
+      let data = {};
       try {
         data = await response.json();
-      } catch (parseError) {
-        // If response isn't JSON, create a basic error object
-        data = {};
-      }
+      } catch {}
 
-      // Handle non-OK responses
       if (!response.ok) {
-        let errorMessage = data.error || "Failed to submit maintenance request";
-        
-        // Handle specific error cases
+        let msg = data.error || "Failed to submit request";
         if (response.status === 401) {
-          errorMessage = "You are not logged in. Please log in and try again.";
-          // Clear user context and refresh auth status
+          msg = "Session expired. Please log in again.";
           setUser(null);
           window.dispatchEvent(new Event("userChange"));
-        } else if (response.status === 400) {
-          errorMessage = data.error || "Invalid request. Please check your input and try again.";
-        } else if (!data.error) {
-          errorMessage = `Server error (${response.status}). Please try again later.`;
         }
-        
-        throw new Error(errorMessage);
+        throw new Error(msg);
       }
 
       // Success
       setSubmitted(true);
-      // Reset form after 3 seconds
       setTimeout(() => {
         setSubmitted(false);
         setSelectedIssues([]);
         setAdditionalDetails("");
+        setSelectedLeaseId("");
       }, 3000);
     } catch (err) {
-      console.error("Error submitting maintenance request:", err);
-      setError(err.message || "Failed to submit maintenance request. Please try again.");
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -108,16 +130,11 @@ export default function MaintenanceRequest() {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow p-6 max-w-md w-full text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Login Required
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Login Required</h2>
           <p className="text-gray-600 mb-4">
             Please log in to submit a maintenance request.
           </p>
-          <a
-            href="/tenants/login"
-            className="text-indigo-600 hover:underline font-medium"
-          >
+          <a href="/tenants/login" className="text-indigo-600 hover:underline font-medium">
             Go to Login
           </a>
         </div>
@@ -130,106 +147,99 @@ export default function MaintenanceRequest() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Maintenance Request
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Maintenance Request</h1>
             <p className="text-gray-600">
-              Select the issues you're experiencing and provide additional
-              details below.
+              Select the issues you're experiencing and provide additional details below.
             </p>
           </div>
 
           {submitted ? (
             <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-              <div className="text-green-600 mb-2">
-                <svg
-                  className="mx-auto h-12 w-12"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-green-800 mb-1">
-                Request Submitted Successfully!
-              </h3>
-              <p className="text-green-700">
-                Your maintenance request has been received. We'll contact you
-                soon.
-              </p>
+              <svg className="mx-auto h-12 w-12 text-green-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-lg font-semibold text-green-800">Request Submitted Successfully!</h3>
+              <p className="text-green-700 mt-2">We'll get back to you soon.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error Message */}
+
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-sm text-red-800 mb-2">{error}</p>
-                  {error.includes("not logged in") && (
-                    <a
-                      href="/tenants/login"
-                      className="text-sm text-indigo-600 hover:underline font-medium"
-                    >
-                      Go to Login →
-                    </a>
-                  )}
+                  <p className="text-sm text-red-800">{error}</p>
                 </div>
               )}
-              {/* Common Issues Section */}
+
+              {/* Optional Lease Selector */}
+              {!loadingLeases && leases.length > 0 && (
+                <div>
+                  <label htmlFor="lease" className="block text-sm font-medium text-gray-700 mb-2">
+                    Which property/unit is this for?
+                  </label>
+                  <select
+                    id="lease"
+                    value={selectedLeaseId}
+                    onChange={(e) => setSelectedLeaseId(e.target.value)}
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  >
+                    <option value="">— Not sure / affects multiple units —</option>
+                    {leases.map((lease) => (
+                      <option key={lease.id} value={lease.id}>
+                        {lease.propertyAddress || "Unknown Address"} - Unit {lease.unitNumber || "N/A"}
+                        {lease.isCurrent ? " (Current)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Leave blank if the issue is in a common area or you're unsure.
+                  </p>
+                </div>
+              )}
+
+              {/* Common Issues */}
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Common Issues
+                  Common Issues <span className="text-red-600">*</span>
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {commonIssues.map((issue) => (
                     <label
                       key={issue}
-                      className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                      className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
                     >
                       <input
                         type="checkbox"
                         checked={selectedIssues.includes(issue)}
                         onChange={() => handleCheckboxChange(issue)}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        className="h-4 w-4 text-indigo-600 rounded focus:ring-indigo-500"
                       />
-                      <span className="ml-3 text-sm text-gray-700">
-                        {issue}
-                      </span>
+                      <span className="ml-3 text-sm text-gray-700">{issue}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              {/* Additional Details Section */}
+              {/* Additional Details */}
               <div>
-                <label
-                  htmlFor="additional-details"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Additional Details
+                <label htmlFor="details" className="block text-sm font-medium text-gray-700 mb-2">
+                  Additional Details (Optional)
                 </label>
                 <textarea
-                  id="additional-details"
-                  name="additional-details"
+                  id="details"
                   rows={6}
                   value={additionalDetails}
                   onChange={(e) => setAdditionalDetails(e.target.value)}
-                  placeholder="Please provide any additional information about the maintenance issue(s), including location, urgency, or other relevant details..."
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="Location in unit, how long it's been happening, urgency, photos, etc..."
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
               </div>
 
-              {/* Submit Button */}
+              {/* Submit */}
               <div className="flex justify-end">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-6 rounded-lg shadow transition-colors"
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold py-2 px-6 rounded-lg shadow"
                 >
                   {loading ? "Submitting..." : "Submit Request"}
                 </button>
@@ -241,4 +251,3 @@ export default function MaintenanceRequest() {
     </div>
   );
 }
-
