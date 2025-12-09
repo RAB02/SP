@@ -68,6 +68,7 @@ export default function AdminPaymentForm({
               </label>
               <input
                 type="number"
+                step={0.01}
                 name="amount"
                 value={form.amount}
                 onChange={onChange}

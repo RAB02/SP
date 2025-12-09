@@ -1,5 +1,8 @@
 "use client";
+
 import { RentalCarousel } from "@/components/RentalCarousel";
+import { GlyphMarker } from "@/components/GlyphMarker"; 
+import { DatasetLayer } from "@/components/DatasetLayer";
 import { useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -7,139 +10,7 @@ import {
   APIProvider,
   Map,
   useMap,
-  AdvancedMarker,
 } from "@vis.gl/react-google-maps";
-
-function GlyphMarker({ position, rental }) {
-  const map = useMap();
-  const infoWindowRef = useRef(null);
-  const isOpenRef = useRef(false);
-
-  useEffect(() => {
-    if (!map || !rental) return;
-
-    const infoWindow = new google.maps.InfoWindow({
-      position: position,
-      content: `
-        <div style="font-family: sans-serif; max-width: 240px;">
-          <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 6px;">${
-            rental?.apartment_name || "Apartment"
-          }</h3>
-          <p style="font-size: 14px; color: #555;">${
-            rental?.address || "Address not available"
-          }</p>
-          <p style="font-size: 14px; color: #555;">Rent: $${
-            rental?.pricing || "N/A"
-          }</p>
-        </div>
-      `,
-    });
-
-    infoWindowRef.current = infoWindow;
-
-    // No map click listener — we’ll use marker click instead
-
-    return () => {
-      infoWindow.close();
-    };
-  }, [map, rental, position]);
-
-  // Click handler for marker (toggles InfoWindow)
-  const handleMarkerClick = () => {
-    if (!infoWindowRef.current || !map) return;
-
-    if (isOpenRef.current) {
-      infoWindowRef.current.close();
-      isOpenRef.current = false;
-    } else {
-      infoWindowRef.current.open({ map });
-      isOpenRef.current = true;
-    }
-  };
-  return (
-    <AdvancedMarker
-      position={position}
-      title="Rental Location"
-      onClick={handleMarkerClick}
-    >
-      <img src="/home.svg" alt="Home Icon" className="w-8 h-8" />
-    </AdvancedMarker>
-  );
-}
-
-const DatasetLayer = ({ datasetId }) => {
-  const map = useMap();
-  const lastClickedFeatureIds = useRef([]);
-  const infoWindowRef = useRef(null);
-
-  useEffect(() => {
-    if (!map || !datasetId) return;
-
-    const datasetLayer = map.getDatasetFeatureLayer(datasetId);
-    const styleDefault = {
-      strokeColor: "blue",
-      strokeWeight: 2.0,
-      strokeOpacity: 1.0,
-      fillColor: "blue",
-      fillOpacity: 0.3,
-    };
-
-    datasetLayer.style = styleDefault;
-
-    const handleClick = (e) => {
-      if (!e.features?.length) return;
-
-      // Track clicked features
-      lastClickedFeatureIds.current = e.features.map(
-        (f) => f.datasetAttributes?.["globalid"]
-      );
-      datasetLayer.style = styleDefault;
-
-      const feature = e.features[0];
-      const school_name =
-        feature.datasetAttributes?.["USER_School_Name"] || "Unnamed Feature";
-      const addy =
-        feature.datasetAttributes?.["StAddr"] || "No level data available";
-      const school_type =
-        feature.datasetAttributes?.["School_Type"] || "No level data available";
-      const phone =
-        feature.datasetAttributes?.["USER_School_Phone"] ||
-        "No level data available";
-      const score =
-        feature.datasetAttributes?.["Score"] || "No score available";
-
-      // Close previous InfoWindow
-      if (infoWindowRef.current) {
-        infoWindowRef.current.close();
-      }
-
-      // Create new InfoWindow
-      const infoWindow = new google.maps.InfoWindow({
-        position: e.latLng,
-        content: `
-          <div style="font-family: sans-serif; max-width: 240px;">
-            <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 6px;">${school_name}</h3>
-            <p style="font-size: 14px; color: #555;">${addy}</p>
-            <p style="font-size: 14px; color: #555;">${school_type}</p>
-            <p style="font-size: 14px; color: #555;">${phone}</p>
-            <p style="font-size: 14px; color: #555;"> Score :${score}</p>
-          </div>
-        `,
-      });
-
-      infoWindow.open(map);
-      infoWindowRef.current = infoWindow;
-    };
-
-    datasetLayer.addListener("click", handleClick);
-
-    return () => {
-      google.maps.event.clearInstanceListeners(datasetLayer);
-    };
-  }, [map, datasetId]);
-
-  return null;
-};
 
 export default function RentalDetails() {
   const { id } = useParams();
