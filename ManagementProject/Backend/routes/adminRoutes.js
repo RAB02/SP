@@ -420,20 +420,39 @@ router.get("/maintenance", verifyAdmin, async (req, res) => {
         m.request_id,
         m.user_id,
         u.username,
+        u.email,
         m.selected_issues,
         m.additional_details,
         m.status,
         m.created_at,
-        a.address
+        m.lease_id,
+        a.address,
+        a.apartment_name
       FROM MaintenanceRequests m
-      JOIN Users u ON m.user_id = u.user_id
-      JOIN Leases l ON m.lease_id = l.lease_id
-      JOIN Apartments a ON l.apartment_id = a.apartment_id
+      LEFT JOIN Users u ON m.user_id = u.user_id
+      LEFT JOIN Leases l ON m.lease_id = l.lease_id
+      LEFT JOIN Apartments a ON l.apartment_id = a.apartment_id
       ORDER BY m.created_at DESC;
     `);
 
-    console.log("Maintenance Requests:", requests);
-    res.json({ requests });
+    const parsed = requests.map((row) => {
+      let parsedIssues = row.selected_issues;
+      if (typeof parsedIssues === "string") {
+        try {
+          parsedIssues = JSON.parse(parsedIssues);
+        } catch {
+          // keep original string if it is not JSON
+        }
+      }
+
+      return {
+        ...row,
+        selected_issues: parsedIssues,
+      };
+    });
+
+    console.log("Maintenance Requests:", parsed);
+    res.json({ requests: parsed });
   } catch (err) {
     console.error("Error fetching maintenance requests:", err);
     res.status(500).json({ error: "Failed to fetch maintenance requests" });
