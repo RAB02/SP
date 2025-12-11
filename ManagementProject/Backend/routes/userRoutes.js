@@ -563,4 +563,46 @@ router.post("/apply", async (req, res) => {
   }
 });
 
+// GET - List all applications for the current logged-in user
+router.get("/applications", async (req, res) => {
+  try {
+    const token = req.cookies.userToken;
+    if (!token) return res.status(401).json({ error: "No token" });
+
+    const decoded = jwt.verify(token, SECRET_KEY);
+    const userEmail = decoded.email?.trim();
+
+    const applications = await req.app.locals.db.all(`
+      SELECT 
+        ra.application_id,
+        ra.status,
+        ra.created_at,
+        a.apartment_name   AS property_name,
+        a.address          AS property_address,
+        a.pricing          AS monthly_rent
+      FROM RentalApplications ra
+      LEFT JOIN Apartments a ON ra.apartment_id = a.apartment_id
+      WHERE LOWER(ra.email) = LOWER(?)
+      ORDER BY ra.created_at DESC
+    `, [userEmail]);
+
+    const result = applications.map(app => ({
+      application_id: app.application_id,
+      property_name: app.property_name || app.property_address || "Apartment",
+      property_address: app.property_address,
+      status: app.status || "submitted",
+      created_at: app.created_at,
+      monthly_rent: app.monthly_rent || null,
+      move_in_date: null,
+      pets: null,
+      applicants: 1,
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
 module.exports = router;
