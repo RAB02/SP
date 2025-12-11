@@ -148,9 +148,17 @@ export default function MaintenanceRequest() {
         <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Maintenance Request</h1>
-            <p className="text-gray-600">
-              Select the issues you're experiencing and provide additional details below.
-            </p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <p className="text-gray-600">
+                Select the issues you're experiencing and provide additional details below.
+              </p>
+              <a
+                href="/tenants/maintenance/progress"
+                className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-semibold border border-indigo-100 hover:bg-indigo-100"
+              >
+                View Request Status
+              </a>
+            </div>
           </div>
 
           {submitted ? (
