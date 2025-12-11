@@ -3,22 +3,18 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { UserContext } from "@/components/UserContext";
 
-const statusOrder = ["submitted", "under_review", "approved", "rejected", "leased"];
+const statusOrder = ["submitted", "under_review", "approved"];
 
 const statusStyles = {
   submitted: "bg-amber-100 text-amber-800 border-amber-200",
   under_review: "bg-sky-100 text-sky-800 border-sky-200",
   approved: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  rejected: "bg-rose-100 text-rose-800 border-rose-200",
-  leased: "bg-purple-100 text-purple-800 border-purple-200",
 };
 
 const statusLabels = {
   submitted: "Submitted",
   under_review: "Under Review",
   approved: "Approved",
-  rejected: "Rejected",
-  leased: "Leased",
 };
 
 const formatDate = (value) => {
@@ -74,10 +70,25 @@ export default function ApplicationStatusPage() {
 
   const summary = useMemo(() => {
     return applications.reduce((acc, app) => {
-      const key = app.status || "submitted";
-      acc[key] = (acc[key] || 0) + 1;
+      // Normalize status: ensure it matches one of the expected status values
+      let status = app.status || "submitted";
+      if (status.toLowerCase() === "pending") {
+        status = "submitted";
+      }
+      // Map old statuses to new ones
+      if (status === "rejected" || status === "leased") {
+        status = "approved"; // Map rejected/leased to approved for display
+      }
+      // Only count if status is in the expected list
+      if (statusOrder.includes(status)) {
+        acc[status] = (acc[status] || 0) + 1;
+        // Submitted applications also count as under_review
+        if (status === "submitted") {
+          acc["under_review"] = (acc["under_review"] || 0) + 1;
+        }
+      }
       return acc;
-    }, { submitted: 0, under_review: 0, approved: 0, rejected: 0, leased: 0 });
+    }, { submitted: 0, under_review: 0, approved: 0 });
   }, [applications]);
 
   if (!user) {
@@ -124,7 +135,7 @@ export default function ApplicationStatusPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           {statusOrder.map((key) => (
             <div
               key={key}
@@ -162,8 +173,22 @@ export default function ApplicationStatusPage() {
           ) : (
             <ul className="divide-y divide-gray-100">
               {applications.map((app) => {
-                const currentStep = statusOrder.indexOf(app.status);
-                const badge = statusStyles[app.status] || statusStyles.submitted;
+                // Normalize status for display
+                let displayStatus = app.status || "submitted";
+                if (displayStatus.toLowerCase() === "pending") {
+                  displayStatus = "submitted";
+                }
+                // Map old statuses to new ones
+                if (displayStatus === "rejected" || displayStatus === "leased") {
+                  displayStatus = "approved";
+                }
+                // Ensure status is in statusOrder
+                if (!statusOrder.includes(displayStatus)) {
+                  displayStatus = "submitted";
+                }
+                
+                const currentStep = statusOrder.indexOf(displayStatus);
+                const badge = statusStyles[displayStatus] || statusStyles.submitted;
 
                 return (
                   <li key={app.application_id} className="p-6">
@@ -185,7 +210,7 @@ export default function ApplicationStatusPage() {
                       <span
                         className={`inline-flex items-center gap-2 self-start rounded-full border px-3 py-1 text-xs font-semibold ${badge}`}
                       >
-                        {statusLabels[app.status] || "Submitted"}
+                        {statusLabels[displayStatus] || "Submitted"}
                       </span>
                     </div>
 
@@ -193,7 +218,8 @@ export default function ApplicationStatusPage() {
                     <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-center md:gap-12">
                       <div className="flex items-center gap-4">
                         {statusOrder.map((step, index) => {
-                          const reached = index <= currentStep;
+                          // For submitted status (index 0), show as reached
+                          const reached = currentStep >= 0 && index <= currentStep;
                           const isCurrent = index === currentStep;
 
                           return (
