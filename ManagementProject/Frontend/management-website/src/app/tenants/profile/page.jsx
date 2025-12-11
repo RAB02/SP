@@ -64,6 +64,9 @@ export default function TenantProfile() {
                   <a href="/apply" className="text-indigo-600 hover:underline">Start a new application</a>
                 </li>
                 <li>
+                  <a href="/apply/status" className="text-indigo-600 hover:underline">View application status</a>
+                </li>
+                <li>
                   <a href="/rentals" className="text-indigo-600 hover:underline">Browse rentals</a>
                 </li>
                 <li>

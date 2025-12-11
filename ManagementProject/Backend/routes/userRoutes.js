@@ -493,7 +493,7 @@ router.post("/tenants/payments", verifyUser, async (req, res) => {
 });
 
 // POST /apply
-router.post("/apply", async (req, res) => {
+router.post("/apply", verifyUser, async (req, res) => {
   const db = req.app.locals.db;
 
   try {
@@ -516,10 +516,13 @@ router.post("/apply", async (req, res) => {
       consent,
     } = req.body;
 
+    // Use the logged-in user's email to ensure applications are properly associated
+    const userEmail = req.user.email;
+
     // Validate required fields
-    if (!firstName || !lastName || !email || !phone) {
+    if (!firstName || !lastName || !phone) {
       return res.status(400).json({
-        error: "Missing required fields: first name, last name, email, and phone are required",
+        error: "Missing required fields: first name, last name, and phone are required",
       });
     }
 
@@ -529,12 +532,12 @@ router.post("/apply", async (req, res) => {
         employer, job_title, monthly_income, employment_length,
         current_address, rent_amount, landlord_name, landlord_phone,
         consent_to_background_check, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'submitted')`,
       [
         apartmentId || null,
         firstName,
         lastName,
-        email,
+        userEmail, // Use logged-in user's email
         phone,
         dob || null,
         ssn || null,
@@ -556,10 +559,64 @@ router.post("/apply", async (req, res) => {
       applicationId: result.lastID,
     });
 
-    console.log(`Rental application created: ID ${result.lastID} for ${email}${apartmentId ? ` (Apartment ID: ${apartmentId})` : ''}`);
+    console.log(`Rental application created: ID ${result.lastID} for ${userEmail}${apartmentId ? ` (Apartment ID: ${apartmentId})` : ''}`);
   } catch (error) {
     console.error("Error creating rental application:", error);
     res.status(500).json({ error: "Failed to submit application" });
+  }
+});
+
+// GET - List all applications for the current logged-in user
+router.get("/applications", async (req, res) => {
+  try {
+    const token = req.cookies.userToken;
+    if (!token) return res.status(401).json({ error: "No token" });
+
+    const decoded = jwt.verify(token, SECRET_KEY);
+    const userEmail = decoded.email?.trim();
+
+    const applications = await req.app.locals.db.all(`
+      SELECT 
+        ra.application_id,
+        ra.status,
+        ra.created_at,
+        a.apartment_name   AS property_name,
+        a.address          AS property_address,
+        a.pricing          AS monthly_rent
+      FROM RentalApplications ra
+      LEFT JOIN Apartments a ON ra.apartment_id = a.apartment_id
+      WHERE LOWER(ra.email) = LOWER(?)
+      ORDER BY ra.created_at DESC
+    `, [userEmail]);
+
+    const result = applications.map(app => {
+      // Normalize status: 'pending' should be 'submitted' for frontend compatibility
+      let status = app.status || "submitted";
+      if (status.toLowerCase() === "pending") {
+        status = "submitted";
+      }
+      // Map old statuses to new simplified statuses
+      if (status === "rejected" || status === "leased") {
+        status = "approved";
+      }
+      
+      return {
+        application_id: app.application_id,
+        property_name: app.property_name || app.property_address || "Apartment",
+        property_address: app.property_address,
+        status: status,
+        created_at: app.created_at,
+        monthly_rent: app.monthly_rent || null,
+        move_in_date: null,
+        pets: null,
+        applicants: 1,
+      };
+    });
+
+    res.json({ applications: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed" });
   }
 });
 
