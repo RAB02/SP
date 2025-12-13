@@ -145,9 +145,6 @@ export default function SignUp() {
           {" "}
           Log in{" "}
         </a>
-        {/* The code above is going to redirect to the login page and 
-                the user will be able to login with the credentials they have and 
-                be in the home page of the website able to view their rentals */}
       </p>
     </div>
   );

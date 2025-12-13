@@ -142,7 +142,7 @@ export default function RentalDetails() {
 
       {/* Google Map */}
       <section className="rounded-xl overflow-hidden shadow-lg border border-gray-200">
-        <APIProvider apiKey="AIzaSyBhtxGJEFFZ2ml-8sawR6TC0XGe5thtFyc">
+        <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
           <Map
             defaultZoom={12}
             defaultCenter={position}

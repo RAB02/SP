@@ -180,7 +180,7 @@ const ApplyForm = () => {
                   <option value="">-- Please select an apartment --</option>
                   {apartments.map((apartment) => (
                     <option key={apartment.apartment_id} value={apartment.apartment_id}>
-                      {apartment.apartment_name || apartment.address} - ${apartment.pricing}/month ({apartment.bed} bed, {apartment.bath} bath)
+                      {apartment.address} - ${apartment.pricing}/month ({apartment.bed} bed, {apartment.bath} bath)
                     </option>
                   ))}
                 </select>

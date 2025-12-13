@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { verifyUser } = require("../middleware/authUser");
 const router = express.Router();
-const SECRET_KEY = "SECRET_KEY";
+const SECRET_KEY = process.env.SECRET_API;
 
 // GET /rentals
 router.get("/rentals", async (req, res) => {
