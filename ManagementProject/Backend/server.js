@@ -6,9 +6,10 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const adminRoutes = require("./routes/adminRoutes");
 const userRoutes = require("./routes/userRoutes");
+require("dotenv").config();
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT;
 
 // Middleware
 app.use(express.static(path.join(__dirname, "static")));
@@ -36,7 +37,7 @@ async function startServer() {
   try {
     // Open database
     db = await open({
-      filename: "./db/new_management.db",
+      filename: process.env.DATABASE_URL,
       driver: sqlite3.Database,
     });
 
