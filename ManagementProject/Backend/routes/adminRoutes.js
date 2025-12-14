@@ -7,7 +7,7 @@ const {
   verifyAdmin,
   verifyAdminStatus,
 } = require("../middleware/authAdmin.js");
-
+require("dotenv").config();
 const router = express.Router();
 const SECRET_KEY = "SECRET_KEY"; // same as in server.js
 
@@ -213,7 +213,6 @@ router.get("/payments", verifyAdmin, async (req, res) => {
       JOIN Leases l ON p.lease_id = l.lease_id
       JOIN Users u ON l.user_id = u.user_id
       JOIN Apartments a ON l.apartment_id = a.apartment_id
-      WHERE l.status = 1
       ORDER BY p.payment_date DESC, p.payment_id DESC;
     `);
 

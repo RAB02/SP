@@ -1,38 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { loadStripe } from "@stripe/stripe-js";
+import {Elements,} from "@stripe/react-stripe-js";
+import CheckoutForm from "@/components/CheckoutForm";
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+);
 
 export default function UserPayment() {
   const { lease_id } = useParams();
-
   const today = new Date().toISOString().slice(0, 10);
 
   const [form, setForm] = useState({
     name: "",
     email: "",
-    apartment: "",
+    address: "",
     amount: "",
     payment_date: today,
-    card_number: "",
-    card_name: "",
-    cvv: "",
     method: "Card",
   });
 
-  const [loading, setLoading] = useState(false);
+  const [clientSecret, setClientSecret] = useState("");
   const [error, setError] = useState("");
-  const [paymentInfo, setPaymentInfo] = useState(null);
   const [infoLoading, setInfoLoading] = useState(true);
 
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-
-  // 🔹 Auto-load lease/user/apartment info
   useEffect(() => {
     const fetchLeaseInfo = async () => {
       try {
         setError("");
+        setInfoLoading(true);
 
         const res = await fetch(
           `http://localhost:8080/tenants/payments/${lease_id}`,
@@ -40,70 +39,80 @@ export default function UserPayment() {
         );
 
         const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to load lease info");
-        }
+        if (!res.ok) throw new Error(data.error || "Failed to load lease info");
 
         setForm((prev) => ({
           ...prev,
           name: data.name || "",
           email: data.email || "",
-          apartment: data.apartment || "",
           address: data.address || "",
-          amount: data.rent_amount != null ? String(data.rent_amount) : prev.amount,
-          payment_date: today, 
+          amount:
+            data.rent_amount != null ? String(data.rent_amount) : prev.amount,
+          payment_date: today,
         }));
       } catch (err) {
-        console.error(err);
         setError(err.message || "Failed to load lease info");
       } finally {
         setInfoLoading(false);
       }
     };
 
-    if (lease_id) {
-      fetchLeaseInfo();
-    }
+    if (lease_id) fetchLeaseInfo();
   }, [lease_id, today]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    setPaymentInfo(null);
+  useEffect(() => {
+    const createIntent = async () => {
+      try {
+        setError("");
+        setClientSecret("");
 
-    try {
-      const payload = {
-        lease_id: Number(lease_id),
-        amount: Number(form.amount),
-        // enforce today's date on the backend payload, not from the input
-        payment_date: new Date().toISOString().slice(0, 10),
-        method: form.method,
-        status: "Paid",
-      };
+        if (!lease_id) return;
 
-      const res = await fetch("http://localhost:8080/tenants/payments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
+        const res = await fetch(
+          "http://localhost:8080/stripe/create-payment-intent",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ lease_id: Number(lease_id) }),
+          }
+        );
 
-      const data = await res.json();
+        const data = await res.json();
+        if (!res.ok)
+          throw new Error(data.error || "Failed to create payment intent");
 
-      if (!res.ok) {
-        throw new Error(data.error || data.message || "Payment failed");
+        setClientSecret(data.clientSecret);
+      } catch (err) {
+        setError(err.message || "Stripe init failed");
       }
+    };
 
-      // make sure backend returns `payment` if you want this:
-      setPaymentInfo(data.payment || null);
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Error sending payment.");
-    } finally {
-      setLoading(false);
-    }
+    if (!infoLoading && lease_id) createIntent();
+  }, [lease_id, infoLoading]);
+
+  const options = useMemo(() => ({ clientSecret }), [clientSecret]);
+
+  const onPaid = async (stripePaymentIntentId) => {
+    const payload = {
+      lease_id: Number(lease_id),
+      payment_date: new Date().toISOString().slice(0, 10),
+      method: "Card",
+      stripe_payment_intent_id: stripePaymentIntentId,
+    };
+
+    const res = await fetch("http://localhost:8080/tenants/payments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.error || data.message || "Payment save failed");
+
+    return data;
   };
 
   return (
@@ -111,183 +120,14 @@ export default function UserPayment() {
       <div className="w-full max-w-3xl space-y-6">
         {infoLoading ? (
           <p className="text-sm text-gray-600">Loading lease info...</p>
+        ) : error ? (
+          <p className="text-sm text-red-600">{error}</p>
+        ) : !clientSecret ? (
+          <p className="text-sm text-gray-600">Preparing secure payment...</p>
         ) : (
-          <>
-            <form
-              onSubmit={handleSubmit}
-              className="w-full bg-white rounded-2xl shadow-md border border-gray-200 p-8 space-y-8"
-            >
-              <h1 className="text-2xl font-semibold text-gray-800">
-                Make a Payment
-              </h1>
-
-              {/* Basic Info Section */}
-              <div className="grid md:grid-cols-2 gap-x-10 gap-y-6">
-                <div className="space-y-2">
-                  <label className="text-lg font-medium text-gray-600 m-2">Full Name</label>
-                  <input
-                    name="name"
-                    value={form.name}
-                    readOnly
-                    className="input-box bg-gray-50"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-lg font-medium text-gray-600 m-2">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    readOnly
-                    className="input-box bg-gray-50"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-lg font-medium text-gray-600 m-2">Apartment</label>
-                  <input
-                    name="apartment"
-                    value={form.address}
-                    readOnly
-                    className="input-box bg-gray-50"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-lg font-medium text-gray-600 m-2">Payment Date</label>
-                  <input
-                    type="date"
-                    name="payment_date"
-                    value={today}
-                    readOnly
-                    className="input-box bg-gray-50 cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-lg font-medium text-gray-600 m-2">Amount</label>
-                <input
-                  name="amount"
-                  type="number"
-                  value={form.amount}
-                  readOnly
-                  placeholder="1200"
-                />
-              </div>
-
-              <div>
-              <label className="block text-lg font-medium text-slate-700 mb-1">
-                Card Number
-              </label>
-              <input
-                type="text"
-                name="cardNumber"
-                value={form.cardNumber}
-                onChange={handleChange}
-                maxLength={16}
-                required
-                inputMode="numeric"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm tracking-[0.16em] focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
-                placeholder="1234 5678 9012 3456"
-              />
-              <p className="mt-1 text-xs text-slate-400">
-                We accept Visa, Mastercard, and more.
-              </p>
-            </div>
-
-            {/* Expiry + CVV */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-lg font-medium text-slate-700 mb-1">
-                  Expiry (MM/YY)
-                </label>
-                <input
-                  type="text"
-                  name="expiry"
-                  value={form.expiry}
-                  onChange={handleChange}
-                  required
-                  maxLength={5}
-                  inputMode="numeric"
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
-                  placeholder="09/27"
-                />
-              </div>
-              <div>
-                <label className="block text-lg font-medium text-slate-700 mb-1">
-                  CVV
-                </label>
-                <input
-                  type="password"
-                  name="cvv"
-                  value={form.cvv}
-                  onChange={handleChange}
-                  required
-                  inputMode="numeric"
-                  maxLength={4}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
-                  placeholder="123"
-                />
-              </div>
-            </div>
-
-              {error && (
-                <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
-                  {error}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
-              >
-                {loading ? "Processing..." : "Pay Now"}
-              </button>
-            </form>
-
-            {paymentInfo && (
-              <div className="bg-white border border-emerald-100 rounded-2xl shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-emerald-700 mb-3">
-                  Payment Submitted
-                </h2>
-                <p className="text-sm text-gray-600">
-                  Payment ID: <span className="font-medium">{paymentInfo.id}</span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  Name: <span className="font-medium">{paymentInfo.name}</span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  Tenant Email:{" "}
-                  <span className="font-medium">{paymentInfo.tenantName}</span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  Apartment:{" "}
-                  <span className="font-medium">{paymentInfo.apartment}</span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  Amount:{" "}
-                  <span className="font-medium">
-                    ${Number(paymentInfo.amount).toFixed(2)}
-                  </span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  Date: <span className="font-medium">{paymentInfo.date}</span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  Method: <span className="font-medium">{paymentInfo.method}</span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  Status:{" "}
-                  <span className="font-medium capitalize">
-                    {paymentInfo.status}
-                  </span>
-                </p>
-              </div>
-            )}
-          </>
+          <Elements stripe={stripePromise} options={options}>
+            <CheckoutForm form={form} lease_id={lease_id} onPaid={onPaid} />
+          </Elements>
         )}
       </div>
     </div>
