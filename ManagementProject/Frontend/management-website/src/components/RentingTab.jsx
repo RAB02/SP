@@ -21,7 +21,7 @@ export default function RentingTab() {
         });
 
         if (res.status === 401) {
-          router.push("/tenants/login");
+          router.push("/login");
           return;
         }
 
@@ -76,7 +76,7 @@ export default function RentingTab() {
       <h2 className="text-lg font-semibold mb-3">Currently Renting</h2>
       <ul className="space-y-3">
         {items.slice(0, 6).map((item) => (
-          <li key={item.id} className="flex items-center gap-3">
+          <li key={item.lease_id} className="flex items-center gap-3">
             {/* Image */}
             <div className="flex-shrink-0">
               <img
@@ -107,7 +107,7 @@ export default function RentingTab() {
 
             {/* View Button */}
             <Link
-              href={`/tenants/payments/${item.id}`}
+              href={`/tenants/payments/${item.lease_id}`}
               className="text-sm text-blue-600 hover:underline flex-shrink-0"
             >
               Pay Rent

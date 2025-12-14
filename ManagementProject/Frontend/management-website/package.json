@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.5.3",
     "@tabler/icons-react": "^3.31.0",
     "@vis.gl/react-google-maps": "^1.5.5",
     "framer-motion": "^12.4.7",
