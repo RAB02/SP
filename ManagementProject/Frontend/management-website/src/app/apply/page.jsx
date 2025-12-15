@@ -135,11 +135,14 @@ const ApplyForm = () => {
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-100">
       <div className="max-w-3xl w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
         <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          <h1 className="text-center text-3xl font-extrabold text-gray-900">
             Rental Application Form
+          </h1>
+          <h2 className="text-center text-xl font-extrabold text-gray-900">
+            Be Sure To Be Logged In
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Please fill out the form below to apply for an apartment.
+            Please fill out the form below to apply for an apartment
           </p>
         </div>
         {submitMessage.text && (
