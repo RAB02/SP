@@ -5,6 +5,7 @@ import { GlyphMarker } from "@/components/GlyphMarker";
 import { DatasetLayer } from "@/components/DatasetLayer";
 import { useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import {
   APIProvider,
@@ -23,10 +24,25 @@ export default function RentalDetails() {
 
   const fetchRental = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/rentals/${id}`);
-      if (!response.ok) throw new Error("Rental not found");
-      const data = await response.json();
-      console.log(data);
+      const { data, error } = await supabase
+        .from("Apartments")
+        .select(`
+          apartment_id,
+          apartment_name,
+          address,
+          bed,
+          bath,
+          pricing,
+          lat,
+          lon,
+          ApartmentImages(image_url)
+        `)
+        .eq("apartment_id", id)
+        .single();
+
+      if (error) throw error;
+
+      console.log("SUPABASE DATA:", data);
       setRental(data);
 
       if (data.lat && data.lon) {
@@ -42,49 +58,23 @@ export default function RentalDetails() {
           localStorage.getItem("recentlyViewedRentals") || "[]"
         );
 
-        // --- NORMALIZE IMAGE URL (your logic) ---
-        const normalizeImageUrl = (img) => {
-          if (!img) {
-            return "https://via.placeholder.com/288x224?text=No+Image";
-          }
+        const imageUrl =
+          data.ApartmentImages?.[0]?.image_url ||
+          "https://via.placeholder.com/288x224?text=No+Image";
 
-          if (img.startsWith("http")) {
-            return img;
-          }
-
-          const path = img.startsWith("/") ? img : `/${img}`;
-          return `http://localhost:8080${path}`;
-        };
-
-        // Extract first image from data.Img
-        let rawImage = null;
-
-        if (Array.isArray(data.Img) && data.Img.length > 0) {
-          rawImage = data.Img[0];
-        } else if (data.Img) {
-          // fallback if it's ever a single string
-          rawImage = data.Img;
-        }
-
-        // Apply your normalization logic
-        const imageUrl = normalizeImageUrl(rawImage);
-
-        // Save simplified rental object
         const rentalToSave = {
-          id: data.ApartmentID || data.apartment_id || id,
-          Apartment: data.Apartment || data.apartment_name || "Apartment",
-          Bed: data.Bed || data.bed || "N/A",
-          Bath: data.Bath || data.bath || "N/A",
-          Pricing: data.Pricing || data.pricing || "N/A",
+          id: data.apartment_id,
+          Apartment: data.apartment_name || "Apartment",
+          Bed: data.bed || "N/A",
+          Bath: data.bath || "N/A",
+          Pricing: data.pricing || "N/A",
           Image: imageUrl,
         };
 
-        // Remove duplicates
         const filtered = recentlyViewed.filter(
           (item) => item.id !== rentalToSave.id
         );
 
-        // Add to front and keep only 10
         const updated = [rentalToSave, ...filtered].slice(0, 10);
 
         localStorage.setItem(
@@ -92,13 +82,12 @@ export default function RentalDetails() {
           JSON.stringify(updated)
         );
 
-        // Notify RecentlyViewed component
         window.dispatchEvent(new Event("recentlyViewedUpdated"));
       } catch (storageErr) {
         console.error("Error saving to recently viewed:", storageErr);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Supabase error:", err);
       setError(true);
     }
   };
@@ -114,7 +103,7 @@ export default function RentalDetails() {
     <div className="bg-white min-h-screen p-6 max-w-2xl mx-auto space-y-8">
       {/* Apartment Info */}
       <section className="bg-gray-100 rounded-xl shadow-md p-4 space-y-3">
-        <RentalCarousel images={rental.Img || []} />
+        <RentalCarousel images={rental.ApartmentImages || []} />
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">{rental.apartment_name}</h1>

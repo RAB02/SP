@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
 export default function SignUp() {
@@ -10,38 +11,58 @@ export default function SignUp() {
     email: "",
     password: "",
     confirmPassword: "",
+    phone: "",
   });
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (data.name === "" || data.email === "" || data.password === "") {
+    if (!data.name || !data.email || !data.password || !data.phone) {
       setError("Please fill all the fields");
       return;
     }
-    if (data.password != data.confirmPassword) {
+
+    if (data.password !== data.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
     setError("");
 
-    const res = await fetch("http://localhost:8080/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: data.name,
+    // 1️⃣ Create auth user
+    const { data: signUpData, error: signUpError } =
+      await supabase.auth.signUp({
         email: data.email,
         password: data.password,
-      }),
+        options: {
+          data: {
+            full_name: data.name,
+            phone: data.phone,
+          },
+        },
+      });
+
+    if (signUpError) {
+      setError(signUpError.message);
+      return;
+    }
+
+    if (!signUpData?.user) {
+      setError("User creation failed");
+      return;
+    }
+
+    console.log("Signed up:", signUpData);
+
+    setData({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      phone: "",
     });
-    const result = await res.json();
-    console.log(result);
-    setData({ name: "", email: "", password: "", confirmPassword: "" });
-    setError("");
+
     Router.push("/login");
   };
 
@@ -53,12 +74,8 @@ export default function SignUp() {
     <div className="w-2/3 min-w-[600px] bg-white box-content border-4 shadow-2xl shadow-inner p-6 rounded-2xl mt-6 md:w-3/4 md:max-w-[500px]">
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-gray-700"
-          >
-            {" "}
-            Full Name{" "}
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            Full Name
           </label>
           <input
             type="text"
@@ -72,12 +89,8 @@ export default function SignUp() {
         </div>
 
         <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
-          >
-            {" "}
-            Email{" "}
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email
           </label>
           <input
             type="email"
@@ -91,12 +104,8 @@ export default function SignUp() {
         </div>
 
         <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700"
-          >
-            {" "}
-            Password{" "}
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            Password
           </label>
           <input
             type="password"
@@ -110,12 +119,8 @@ export default function SignUp() {
         </div>
 
         <div>
-          <label
-            htmlFor="confirmPassword"
-            className="block text-sm font-medium text-gray-700"
-          >
-            {" "}
-            Confirm Password{" "}
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+            Confirm Password
           </label>
           <input
             type="password"
@@ -123,6 +128,22 @@ export default function SignUp() {
             name="confirmPassword"
             placeholder="********"
             value={data.confirmPassword}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            placeholder="123-456-7890"
+            value={data.phone}
+            maxLength={10}
             onChange={handleChange}
             required
           />
@@ -139,11 +160,9 @@ export default function SignUp() {
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-600">
-        {" "}
-        Already have an account?{" "}
+        Already have an account?
         <a href="/login" className="text-indigo-600 hover:underline">
-          {" "}
-          Log in{" "}
+          Log in
         </a>
       </p>
     </div>

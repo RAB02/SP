@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Carousel } from "./ui/Carousel"; // adjust path if needed
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Gallery() {
   const [slides, setSlides] = useState([]);
@@ -9,22 +10,29 @@ export default function Gallery() {
   useEffect(() => {
     async function fetchRentals() {
       try {
-        const res = await fetch("http://localhost:8080/rentals");
-        if (!res.ok) throw new Error("Failed to load rentals");
+        const { data, error } = await supabase
+          .from("Apartments")
+          .select(`
+            apartment_id,
+            apartment_name,
+            address,
+            bed,
+            bath,
+            pricing,
+            ApartmentImages(image_url)
+          `);
 
-        const data = await res.json();
-        console.log("Rentals data:", data);
+        if (error) throw error;
+
+        console.log("SUPABASE RENTALS:", data);
 
         const formattedSlides = data.map((rental) => {
-          let src = "/placeholder.jpg";
-
-          if (rental.Img) {
-            // if Img is already an https URL (like your Pexels links), use it directly
-            src = rental.Img;
-          }
+          const imageUrl =
+            rental.ApartmentImages?.[0]?.image_url ||
+            "https://via.placeholder.com/600x400?text=No+Image";
 
           return {
-            src,
+            src: imageUrl,
             title:
               rental.apartment_name ||
               rental.address ||
@@ -47,7 +55,7 @@ export default function Gallery() {
   }, []);
 
   return (
-    <section className=" w-full  flex-col items-center justify-center">
+    <section className="w-full flex-col items-center justify-center">
       <h2 className="text-3xl font-bold mb-6 text-center">Gallery</h2>
 
       <div className="flex justify-center w-full">

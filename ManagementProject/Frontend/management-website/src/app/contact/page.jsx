@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import DetailsBar from "@/components/DetailsBar";
 import InputSide from "@/components/InputSide";
 import React from "react";
@@ -13,8 +14,10 @@ export default function Contact() {
         </p>
       </div>
       <div className="w-2/3 min-w-[600px] grid grid-cols-1 md:grid-cols-[1fr_1.5fr] bg-white p-2 rounded-md gap-2 md:w-3/4 md:max-w-[500px] md:gap-0">
-        <DetailsBar />
-        <InputSide />
+        <Suspense fallback={<div>Loading form...</div>}>
+          <DetailsBar />
+          <InputSide />
+        </Suspense>
       </div>
     </div>
   );

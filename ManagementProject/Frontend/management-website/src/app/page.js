@@ -40,7 +40,7 @@ export default function Home() {
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        const res = await fetch("http://localhost:8080/rentals");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rentals`);
         if (res.ok) {
           const data = await res.json();
           setListings(data);
@@ -54,20 +54,6 @@ export default function Home() {
     fetchListings();
   }, []);
 
-  // Manual navigation (paged groups of 3)
-  const nextListings = () => {
-    setListingIndex((prev) => {
-      const next = prev + 3;
-      return next >= listings.length ? 0 : next;
-    });
-  };
-
-  const prevListings = () => {
-    setListingIndex((prev) => {
-      const next = prev - 3;
-      return next < 0 ? Math.max(listings.length - 3, 0) : next;
-    });
-  };
 
   // ✅ Slice 3 listings safely
   const visibleListings = listings.slice(listingIndex, listingIndex + 3);

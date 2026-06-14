@@ -4,7 +4,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { User } from "react-feather";
 import { UserProvider } from "@/components/UserContext";
 
 const geistSans = Geist({

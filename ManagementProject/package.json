@@ -2,6 +2,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.93.3",
     "@vis.gl/react-google-maps": "^1.5.5"
   }
 }

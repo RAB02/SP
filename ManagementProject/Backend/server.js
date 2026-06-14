@@ -1,26 +1,36 @@
 const express = require("express");
 const path = require("path");
-const sqlite3 = require("sqlite3");
-const { open } = require("sqlite");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const { createClient } = require("@supabase/supabase-js");
 const adminRoutes = require("./routes/adminRoutes");
 const userRoutes = require("./routes/userRoutes");
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 8080;
+
+// Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 // Middleware
 app.use(express.static(path.join(__dirname, "static")));
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: [
+      "https://apartment-management-967j.onrender.com"
+    ],
     credentials: true,
   })
 );
 app.use(cookieParser());
+
+// Make Supabase available in routes
+app.locals.supabase = supabase;
 
 app.use("/admin", adminRoutes);
 app.use("/", userRoutes);
@@ -30,30 +40,8 @@ app.use(
 );
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-let db;
-
-// Proper async initialization + start server only AFTER DB is ready
-async function startServer() {
-  try {
-    // Open database
-    db = await open({
-      filename: process.env.DATABASE_URL,
-      driver: sqlite3.Database,
-    });
-
-    app.locals.db = db;
-    console.log("Database connected successfully");
-
-    // Start the server only after everything is ready
-    app.listen(PORT, () => {
-      console.log(`Server running at http://localhost:${PORT}`);
-    });
-
-  } catch (err) {
-    console.error("Failed to start server:", err);
-    process.exit(1); // Stop the process if DB fails
-  }
-}
-
-// Start everything
-startServer();
+// Start server (no DB open needed)
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(process.env.SUPABASE_URL);
+});
