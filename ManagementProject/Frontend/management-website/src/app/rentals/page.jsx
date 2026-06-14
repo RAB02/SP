@@ -67,17 +67,23 @@ export default function Rentals() {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+    if (error) throw error;
 
-      setRentals(data || []);
-      console.log(data);
-    } catch (err) {
-      console.error(err);
-      setErrorMessage("Failed to fetch rentals.");
-    } finally {
-      setLoading(false);
+    setRentals(data || []);
+  } catch (err) {
+    console.error("Error:", err.message);
+
+    // 🔥 Retry once after delay (wake-up time)
+    if (retry) {
+      console.log("Retrying after wake-up...");
+      setTimeout(() => fetchRentals(filters, false), 2000);
+    } else {
+      setErrorMessage("Server waking up... please wait a moment.");
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleFilter = (e) => {
     e.preventDefault();
